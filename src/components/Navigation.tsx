@@ -1,9 +1,31 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [session, setSession] = useState<any>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate("/");
+  };
 
   const navItems = [
     { name: "Courses", path: "/courses" },
@@ -23,7 +45,7 @@ const Navigation = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            {navItems.map((item) => (
+            {session && navItems.map((item) => (
               <Link
                 key={item.name}
                 to={item.path}
@@ -32,12 +54,21 @@ const Navigation = () => {
                 {item.name}
               </Link>
             ))}
-            <Link
-              to="/login"
-              className="bg-primary-500 text-white px-4 py-2 rounded-md hover:bg-primary-600 transition-colors duration-200"
-            >
-              Sign In
-            </Link>
+            {session ? (
+              <button
+                onClick={handleSignOut}
+                className="bg-primary-500 text-white px-4 py-2 rounded-md hover:bg-primary-600 transition-colors duration-200"
+              >
+                Sign Out
+              </button>
+            ) : (
+              <Link
+                to="/login"
+                className="bg-primary-500 text-white px-4 py-2 rounded-md hover:bg-primary-600 transition-colors duration-200"
+              >
+                Sign In
+              </Link>
+            )}
           </div>
 
           {/* Mobile Navigation Button */}
@@ -56,7 +87,7 @@ const Navigation = () => {
       {isOpen && (
         <div className="md:hidden animate-fade-in">
           <div className="px-2 pt-2 pb-3 space-y-1 bg-white border-b border-gray-100">
-            {navItems.map((item) => (
+            {session && navItems.map((item) => (
               <Link
                 key={item.name}
                 to={item.path}
@@ -66,13 +97,25 @@ const Navigation = () => {
                 {item.name}
               </Link>
             ))}
-            <Link
-              to="/login"
-              className="block px-3 py-2 text-primary-500 font-medium hover:text-primary-600 transition-colors duration-200"
-              onClick={() => setIsOpen(false)}
-            >
-              Sign In
-            </Link>
+            {session ? (
+              <button
+                onClick={() => {
+                  handleSignOut();
+                  setIsOpen(false);
+                }}
+                className="block w-full text-left px-3 py-2 text-primary-500 font-medium hover:text-primary-600 transition-colors duration-200"
+              >
+                Sign Out
+              </button>
+            ) : (
+              <Link
+                to="/login"
+                className="block px-3 py-2 text-primary-500 font-medium hover:text-primary-600 transition-colors duration-200"
+                onClick={() => setIsOpen(false)}
+              >
+                Sign In
+              </Link>
+            )}
           </div>
         </div>
       )}
