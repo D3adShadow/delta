@@ -3,7 +3,7 @@ import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -18,7 +18,7 @@ const Login = () => {
           description: "You have successfully signed in.",
         });
         navigate("/courses");
-      } else if (event === "USER_DELETED" || event === "SIGNED_OUT") {
+      } else if (event === "SIGNED_OUT") {
         toast({
           title: "Signed out",
           description: "You have been signed out.",
@@ -40,6 +40,9 @@ const Login = () => {
           <p className="mt-2 text-center text-sm text-gray-600">
             Sign in to start learning and earning points
           </p>
+          <p className="mt-1 text-center text-sm text-gray-500">
+            Password must be at least 6 characters long
+          </p>
         </div>
         <div className="mt-8">
           <Auth
@@ -58,13 +61,13 @@ const Login = () => {
             theme="light"
             providers={[]}
             redirectTo={window.location.origin}
-            onError={(error) => {
-              console.error("Auth error:", error);
-              toast({
-                title: "Authentication Error",
-                description: error.message,
-                variant: "destructive",
-              });
+            localization={{
+              variables: {
+                sign_up: {
+                  password_input_placeholder: "Password (min. 6 characters)",
+                  password_input_label: "Password (min. 6 characters)"
+                }
+              }
             }}
           />
         </div>
