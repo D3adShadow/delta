@@ -60,12 +60,12 @@ const Login = () => {
             }}
             theme="light"
             providers={[]}
-            redirectTo={window.location.origin}
+            redirectTo={`${window.location.origin}/courses`}
             localization={{
               variables: {
                 sign_up: {
-                  password_input_placeholder: "Password (min. 6 characters)",
-                  password_input_label: "Password (min. 6 characters)"
+                  password_label: "Password (min. 6 characters)",
+                  password_input_placeholder: "Enter your password (min. 6 characters)"
                 }
               }
             }}
