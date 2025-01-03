@@ -1,5 +1,4 @@
 import { Clock, Users } from "lucide-react";
-import { Link } from "react-router-dom";
 import { Button } from "./ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,22 +42,26 @@ const CourseCard = ({
         return;
       }
 
-      // Get user's current points
+      // First, ensure user profile exists
       const { data: userData, error: userError } = await supabase
         .from("users")
-        .select("points")
-        .eq("id", user.id)
-        .maybeSingle();
+        .upsert({
+          id: user.id,
+          full_name: user.user_metadata.full_name || "User",
+          points: 500, // Default points if not set
+        })
+        .select()
+        .single();
 
       if (userError) {
-        console.error("Error fetching user data:", userError);
-        throw new Error("Could not fetch user data");
+        console.error("Error ensuring user profile:", userError);
+        throw new Error("Could not access user profile");
       }
 
       if (!userData) {
         toast({
-          title: "User profile not found",
-          description: "Please try logging out and back in",
+          title: "Error",
+          description: "Could not access user profile",
           variant: "destructive",
         });
         return;
@@ -116,8 +119,8 @@ const CourseCard = ({
     }
   };
 
-  // Use a default image if none is provided
-  const courseImage = image || "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b";
+  // Use a default image if none is provided or if the image URL is invalid
+  const courseImage = image || "https://moqmdhjobloazogqecti.supabase.co/storage/v1/object/public/course-thumbnails/default-course-image.jpg";
 
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white transition-all duration-200 hover:shadow-lg">
@@ -127,6 +130,10 @@ const CourseCard = ({
           alt={title}
           className="object-cover object-center transition-transform duration-300 group-hover:scale-105"
           loading="lazy"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.src = "https://moqmdhjobloazogqecti.supabase.co/storage/v1/object/public/course-thumbnails/default-course-image.jpg";
+          }}
         />
       </div>
       <div className="flex flex-1 flex-col justify-between p-6">
