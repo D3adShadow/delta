@@ -30,7 +30,7 @@ const CourseCard = ({
   const { toast } = useToast();
 
   const handlePurchase = async (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent navigation
+    e.preventDefault();
     
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -48,10 +48,20 @@ const CourseCard = ({
         .from("users")
         .select("points")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
 
-      if (userError || !userData) {
+      if (userError) {
+        console.error("Error fetching user data:", userError);
         throw new Error("Could not fetch user data");
+      }
+
+      if (!userData) {
+        toast({
+          title: "User profile not found",
+          description: "Please try logging out and back in",
+          variant: "destructive",
+        });
+        return;
       }
 
       if (userData.points < points) {
@@ -73,6 +83,7 @@ const CourseCard = ({
         });
 
       if (purchaseError) {
+        console.error("Purchase error:", purchaseError);
         throw new Error("Failed to purchase course");
       }
 
@@ -83,6 +94,7 @@ const CourseCard = ({
         .eq("id", user.id);
 
       if (updateError) {
+        console.error("Update error:", updateError);
         throw new Error("Failed to update points");
       }
 
@@ -104,11 +116,14 @@ const CourseCard = ({
     }
   };
 
+  // Use a default image if none is provided
+  const courseImage = image || "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b";
+
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white transition-all duration-200 hover:shadow-lg">
       <div className="aspect-h-9 aspect-w-16 bg-gray-200 overflow-hidden">
         <img
-          src={image}
+          src={courseImage}
           alt={title}
           className="object-cover object-center transition-transform duration-300 group-hover:scale-105"
           loading="lazy"

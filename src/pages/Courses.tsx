@@ -20,13 +20,20 @@ const Courses = () => {
   const { data: courses, isLoading, refetch } = useQuery({
     queryKey: ["courses"],
     queryFn: async () => {
+      console.log("Fetching courses...");
       const { data, error } = await supabase
         .from("courses")
         .select(`
           *,
-          instructor:users(full_name)
+          instructor:users!courses_instructor_id_fkey(full_name)
         `);
-      if (error) throw error;
+      
+      if (error) {
+        console.error("Error fetching courses:", error);
+        throw error;
+      }
+      
+      console.log("Fetched courses:", data);
       return data;
     },
   });
@@ -52,7 +59,7 @@ const Courses = () => {
             instructor={course.instructor?.full_name || "Delta Instructor"}
             duration="8 weeks"
             enrolled={42}
-            image={course.thumbnail_url || "/placeholder.svg"}
+            image={course.thumbnail_url}
             points={course.points_price}
             onPurchase={refetch}
           />
