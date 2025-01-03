@@ -17,12 +17,15 @@ const Courses = () => {
     checkAuth();
   }, [navigate]);
 
-  const { data: courses, isLoading } = useQuery({
+  const { data: courses, isLoading, refetch } = useQuery({
     queryKey: ["courses"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("courses")
-        .select("*");
+        .select(`
+          *,
+          instructor:users(full_name)
+        `);
       if (error) throw error;
       return data;
     },
@@ -46,11 +49,12 @@ const Courses = () => {
             id={course.id}
             title={course.title}
             description={course.description}
-            instructor={course.instructor_id || "Delta Instructor"}
+            instructor={course.instructor?.full_name || "Delta Instructor"}
             duration="8 weeks"
             enrolled={42}
-            image={course.thumbnail_url || "https://picsum.photos/800/600"}
+            image={course.thumbnail_url || "/placeholder.svg"}
             points={course.points_price}
+            onPurchase={refetch}
           />
         ))}
       </div>

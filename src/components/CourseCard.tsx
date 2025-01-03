@@ -1,5 +1,8 @@
 import { Clock, Users } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Button } from "./ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CourseCardProps {
   id: string;
@@ -10,6 +13,7 @@ interface CourseCardProps {
   enrolled: number;
   image: string;
   points: number;
+  onPurchase?: () => void;
 }
 
 const CourseCard = ({
@@ -21,12 +25,87 @@ const CourseCard = ({
   enrolled,
   image,
   points,
+  onPurchase,
 }: CourseCardProps) => {
+  const { toast } = useToast();
+
+  const handlePurchase = async (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent navigation
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to purchase courses",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Get user's current points
+      const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select("points")
+        .eq("id", user.id)
+        .single();
+
+      if (userError || !userData) {
+        throw new Error("Could not fetch user data");
+      }
+
+      if (userData.points < points) {
+        toast({
+          title: "Insufficient points",
+          description: "You don't have enough points to purchase this course",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Create purchase record
+      const { error: purchaseError } = await supabase
+        .from("course_purchases")
+        .insert({
+          user_id: user.id,
+          course_id: id,
+          points_spent: points,
+        });
+
+      if (purchaseError) {
+        throw new Error("Failed to purchase course");
+      }
+
+      // Update user points
+      const { error: updateError } = await supabase
+        .from("users")
+        .update({ points: userData.points - points })
+        .eq("id", user.id);
+
+      if (updateError) {
+        throw new Error("Failed to update points");
+      }
+
+      toast({
+        title: "Course purchased successfully!",
+        description: "You can now access this course from your profile",
+      });
+
+      if (onPurchase) {
+        onPurchase();
+      }
+    } catch (error) {
+      console.error("Purchase error:", error);
+      toast({
+        title: "Purchase failed",
+        description: "There was an error purchasing the course",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
-    <Link
-      to={`/courses/${id}`}
-      className="group relative flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white transition-all duration-200 hover:shadow-lg"
-    >
+    <div className="group relative flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white transition-all duration-200 hover:shadow-lg">
       <div className="aspect-h-9 aspect-w-16 bg-gray-200 overflow-hidden">
         <img
           src={image}
@@ -62,12 +141,17 @@ const CourseCard = ({
           </div>
         </div>
         <div className="mt-6 border-t border-gray-100 pt-4">
-          <div className="text-sm font-medium text-gray-700">
-            By {instructor}
+          <div className="flex items-center justify-between">
+            <div className="text-sm font-medium text-gray-700">
+              By {instructor}
+            </div>
+            <Button onClick={handlePurchase} variant="default" size="sm">
+              Purchase
+            </Button>
           </div>
         </div>
       </div>
-    </Link>
+    </div>
   );
 };
 
