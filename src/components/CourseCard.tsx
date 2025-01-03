@@ -42,6 +42,23 @@ const CourseCard = ({
         return;
       }
 
+      // Check if user has already purchased the course
+      const { data: existingPurchase } = await supabase
+        .from("course_purchases")
+        .select()
+        .eq("user_id", user.id)
+        .eq("course_id", id)
+        .single();
+
+      if (existingPurchase) {
+        toast({
+          title: "Course already purchased",
+          description: "You already own this course",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // First, ensure user profile exists
       const { data: userData, error: userError } = await supabase
         .from("users")
@@ -87,6 +104,14 @@ const CourseCard = ({
 
       if (purchaseError) {
         console.error("Purchase error:", purchaseError);
+        if (purchaseError.code === "23505") {
+          toast({
+            title: "Course already purchased",
+            description: "You already own this course",
+            variant: "destructive",
+          });
+          return;
+        }
         throw new Error("Failed to purchase course");
       }
 
