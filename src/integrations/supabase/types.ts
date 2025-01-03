@@ -9,6 +9,45 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      course_purchases: {
+        Row: {
+          course_id: string | null
+          id: string
+          points_spent: number
+          purchased_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          course_id?: string | null
+          id?: string
+          points_spent: number
+          purchased_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          course_id?: string | null
+          id?: string
+          points_spent?: number
+          purchased_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_purchases_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_purchases_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       courses: {
         Row: {
           category: string
