@@ -8,10 +8,12 @@ import TransactionHistory from "@/components/points/TransactionHistory";
 import { Card } from "@/components/ui/card";
 
 const POINTS_PACKAGES = [
-  { amount: 100, price: "$10" },
-  { amount: 500, price: "$45" },
-  { amount: 1000, price: "$80" },
+  { amount: 100, price: "₹100" },
+  { amount: 500, price: "₹450" },
+  { amount: 1000, price: "₹800" },
 ];
+
+// ... keep existing code (functions and state management)
 
 const Points = () => {
   const [userPoints, setUserPoints] = useState<number | null>(null);
