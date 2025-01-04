@@ -30,6 +30,7 @@ const Login = () => {
                 {
                   id: session.user.id,
                   full_name: session.user.user_metadata.full_name || 'Anonymous User',
+                  points: 500 // Explicitly set initial points
                 }
               ]);
 
