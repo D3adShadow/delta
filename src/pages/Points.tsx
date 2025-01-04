@@ -7,21 +7,32 @@ import Navigation from "@/components/Navigation";
 import TransactionHistory from "@/components/points/TransactionHistory";
 import { Card } from "@/components/ui/card";
 
-const POINTS_PACKAGES = [
-  { amount: 100, price: "₹100" },
-  { amount: 500, price: "₹450" },
-  { amount: 1000, price: "₹800" },
-];
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
 
-// ... keep existing code (functions and state management)
+const POINTS_PACKAGES = [
+  { amount: 100, price: 100 },
+  { amount: 500, price: 450 },
+  { amount: 1000, price: 800 },
+];
 
 const Points = () => {
   const [userPoints, setUserPoints] = useState<number | null>(null);
   const [userName, setUserName] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
+    // Load Razorpay SDK
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    document.body.appendChild(script);
+
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -52,8 +63,9 @@ const Points = () => {
     setUserName(data.full_name);
   };
 
-  const handlePurchasePoints = async (amount: number) => {
+  const handlePurchasePoints = async (pointsAmount: number, priceInRupees: number) => {
     try {
+      setIsLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast({
@@ -64,28 +76,70 @@ const Points = () => {
         return;
       }
 
-      console.log("Purchasing points:", amount);
-      const { data, error } = await supabase
-        .from("users")
-        .update({ points: (userPoints || 0) + amount })
-        .eq("id", user.id)
-        .select();
-
-      if (error) throw error;
-
-      console.log("Points updated:", data);
-      setUserPoints(data[0].points);
-      toast({
-        title: "Points purchased successfully!",
-        description: `${amount} points have been added to your account`,
+      // Create Razorpay order
+      const orderResponse = await supabase.functions.invoke('create-razorpay-order', {
+        body: { amount: priceInRupees, userId: user.id },
       });
+
+      if (orderResponse.error) throw new Error(orderResponse.error.message);
+      const order = orderResponse.data;
+
+      // Initialize Razorpay payment
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: order.amount,
+        currency: "INR",
+        name: "Delta Learning",
+        description: `Purchase ${pointsAmount} points`,
+        order_id: order.id,
+        handler: async function (response: any) {
+          try {
+            // Verify payment and update points
+            const verifyResponse = await supabase.functions.invoke('verify-razorpay-payment', {
+              body: {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                userId: user.id,
+                pointsAmount: (userPoints || 0) + pointsAmount,
+              },
+            });
+
+            if (verifyResponse.error) throw new Error(verifyResponse.error.message);
+
+            setUserPoints(verifyResponse.data.points);
+            toast({
+              title: "Points purchased successfully!",
+              description: `${pointsAmount} points have been added to your account`,
+            });
+          } catch (error) {
+            console.error("Error verifying payment:", error);
+            toast({
+              title: "Payment verification failed",
+              description: "There was an error verifying your payment",
+              variant: "destructive",
+            });
+          }
+        },
+        prefill: {
+          email: user.email,
+        },
+        theme: {
+          color: "#6366f1",
+        },
+      };
+
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
     } catch (error) {
-      console.error("Error purchasing points:", error);
+      console.error("Error initiating payment:", error);
       toast({
-        title: "Purchase failed",
-        description: "There was an error purchasing points",
+        title: "Payment failed",
+        description: "There was an error initiating the payment",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -121,13 +175,14 @@ const Points = () => {
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">
                   {pkg.amount} Points
                 </h3>
-                <p className="text-lg text-gray-600 mb-4">{pkg.price}</p>
+                <p className="text-lg text-gray-600 mb-4">₹{pkg.price}</p>
                 <Button
-                  onClick={() => handlePurchasePoints(pkg.amount)}
+                  onClick={() => handlePurchasePoints(pkg.amount, pkg.price)}
                   className="w-full"
                   variant="default"
+                  disabled={isLoading}
                 >
-                  Purchase
+                  {isLoading ? "Processing..." : "Purchase"}
                 </Button>
               </Card>
             ))}
