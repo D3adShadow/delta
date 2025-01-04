@@ -29,7 +29,7 @@ const MobileMenu = ({ isOpen, session, navItems, onSignOut, onClose }: MobileMen
                   <Link
                     key={item.name}
                     to={item.path}
-                    className="text-base font-medium text-gray-900 bg-white px-3 py-2 rounded-md"
+                    className="text-base font-medium text-white bg-primary-500 px-3 py-2 rounded-md"
                     onClick={onClose}
                   >
                     {item.name}
@@ -41,14 +41,14 @@ const MobileMenu = ({ isOpen, session, navItems, onSignOut, onClose }: MobileMen
                       onSignOut();
                       onClose();
                     }}
-                    className="w-full text-left px-3 py-2 text-base font-medium text-gray-900 bg-white rounded-md"
+                    className="w-full text-left px-3 py-2 text-base font-medium text-white bg-primary-500 rounded-md"
                   >
                     Sign Out
                   </button>
                 ) : (
                   <Link
                     to="/login"
-                    className="text-base font-medium text-gray-900 bg-white px-3 py-2 rounded-md"
+                    className="text-base font-medium text-white bg-primary-500 px-3 py-2 rounded-md"
                     onClick={onClose}
                   >
                     Sign In
