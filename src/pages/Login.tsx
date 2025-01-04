@@ -29,7 +29,7 @@ const Login = () => {
               .insert([
                 {
                   id: session.user.id,
-                  full_name: session.user.user_metadata.full_name || 'Anonymous User',
+                  full_name: session.user.user_metadata.name || session.user.user_metadata.full_name || 'Anonymous User',
                   points: 500
                 }
               ]);
@@ -71,10 +71,7 @@ const Login = () => {
             Welcome to Delta
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Sign in to start learning and earning points
-          </p>
-          <p className="mt-1 text-center text-sm text-gray-500">
-            Password must be at least 6 characters long
+            Sign in with Google to start learning
           </p>
         </div>
         <div className="mt-8">
@@ -92,33 +89,9 @@ const Login = () => {
               },
             }}
             theme="light"
-            providers={[]}
+            providers={["google"]}
             redirectTo={`${window.location.origin}/courses`}
-            localization={{
-              variables: {
-                sign_up: {
-                  email_label: "Email address",
-                  password_label: "Password (min. 6 characters)",
-                  email_input_placeholder: "Your email address",
-                  password_input_placeholder: "Your password",
-                  button_label: "Sign up",
-                  loading_button_label: "Signing up ...",
-                  social_provider_text: "Sign in with {{provider}}",
-                  link_text: "Don't have an account? Sign up",
-                  confirmation_text: "Check your email for the confirmation link",
-                }
-              }
-            }}
-            showLinks={true}
-            view="sign_up"
-            additionalData={{
-              full_name: {
-                required: true,
-                label: "Username",
-                placeholder: "Choose a username",
-                type: "text"
-              }
-            }}
+            view="sign_in"
           />
         </div>
       </div>
