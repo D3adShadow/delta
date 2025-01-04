@@ -64,7 +64,6 @@ const Login = () => {
         <div className="mt-8">
           <Auth
             supabaseClient={supabase}
-            view="sign_in"
             appearance={{
               theme: ThemeSupa,
               variables: {
@@ -88,10 +87,13 @@ const Login = () => {
               }
             }}
             showLinks={true}
+            view="sign_up"
             additionalData={{
               full_name: {
                 required: true,
-              },
+                label: "Full Name",
+                placeholder: "Enter your full name"
+              }
             }}
           />
         </div>
