@@ -42,7 +42,7 @@ const Navigation = () => {
       console.log("Auth state changed:", event, currentSession);
       setSession(currentSession);
 
-      if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+      if (event === 'SIGNED_OUT') {
         navigate("/login");
         toast({
           title: "Signed out",
