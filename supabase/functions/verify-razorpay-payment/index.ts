@@ -1,19 +1,11 @@
-import Razorpay from 'razorpay';
-import { serve } from 'https://deno.fresh.run/std@v1/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import Razorpay from "https://esm.sh/razorpay@2.9.2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-
-interface RequestBody {
-  razorpay_order_id: string;
-  razorpay_payment_id: string;
-  razorpay_signature: string;
-  userId: string;
-  pointsAmount: number;
-}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -21,18 +13,25 @@ serve(async (req) => {
   }
 
   try {
-    const razorpay = new Razorpay({
-      key_id: Deno.env.get('RAZORPAY_KEY_ID') || '',
-      key_secret: Deno.env.get('RAZORPAY_KEY_SECRET') || '',
-    });
-
     const {
       razorpay_order_id,
       razorpay_payment_id,
       razorpay_signature,
       userId,
       pointsAmount,
-    } = await req.json() as RequestBody;
+    } = await req.json();
+
+    console.log('Verifying payment:', {
+      razorpay_order_id,
+      razorpay_payment_id,
+      userId,
+      pointsAmount,
+    });
+
+    const razorpay = new Razorpay({
+      key_id: Deno.env.get('RAZORPAY_KEY_ID') || '',
+      key_secret: Deno.env.get('RAZORPAY_KEY_SECRET') || '',
+    });
 
     // Verify payment signature
     const isValid = razorpay.webhooks.verifyPaymentSignature({
@@ -54,9 +53,7 @@ serve(async (req) => {
     // Update user points
     const { data, error } = await supabaseAdmin
       .from('users')
-      .update({ 
-        points: pointsAmount 
-      })
+      .update({ points: pointsAmount })
       .eq('id', userId)
       .select()
       .single();
