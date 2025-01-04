@@ -25,16 +25,25 @@ export const useAuthForm = () => {
     }
 
     setIsLoading(true);
+    console.log("Starting signup process...");
 
     try {
-      const { data, error } = await supabase.auth.signUp({
+      // First, create the auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            full_name: name,
+          },
+        },
       });
 
-      if (error) {
+      if (authError) {
+        console.error("Auth error during signup:", authError);
+        
         // Handle rate limit error specifically
-        if (error.status === 429) {
+        if (authError.status === 429) {
           const waitTime = 31; // Seconds to wait before retrying
           setRateLimitTimer(waitTime);
           
@@ -57,7 +66,7 @@ export const useAuthForm = () => {
         } else {
           toast({
             title: "Error",
-            description: error.message,
+            description: authError.message,
             variant: "destructive",
           });
         }
@@ -65,18 +74,22 @@ export const useAuthForm = () => {
         return;
       }
 
-      if (data.user) {
+      if (authData.user) {
+        console.log("Auth user created successfully:", authData.user.id);
+        
+        // Then create the public user profile
         const { error: profileError } = await supabase
           .from('users')
           .insert([
             {
-              id: data.user.id,
+              id: authData.user.id,
               full_name: name,
-              points: 500
+              points: 500, // Default starting points
             }
           ]);
 
         if (profileError) {
+          console.error("Profile creation error:", profileError);
           toast({
             title: "Error",
             description: "There was a problem setting up your account. Please try again.",
@@ -85,6 +98,7 @@ export const useAuthForm = () => {
           return;
         }
 
+        console.log("User profile created successfully");
         toast({
           title: "Welcome!",
           description: "Your account has been created successfully.",
@@ -92,7 +106,7 @@ export const useAuthForm = () => {
         navigate("/courses");
       }
     } catch (error) {
-      console.error("Signup error:", error);
+      console.error("Unexpected signup error:", error);
       toast({
         title: "Error",
         description: "An unexpected error occurred. Please try again.",
@@ -105,6 +119,7 @@ export const useAuthForm = () => {
 
   const handleSignIn = async (email: string, password: string) => {
     setIsLoading(true);
+    console.log("Starting signin process...");
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -113,6 +128,7 @@ export const useAuthForm = () => {
       });
 
       if (error) {
+        console.error("Signin error:", error);
         toast({
           title: "Error",
           description: error.message,
@@ -123,6 +139,7 @@ export const useAuthForm = () => {
       }
 
       if (data.user) {
+        console.log("User signed in successfully:", data.user.id);
         toast({
           title: "Welcome back!",
           description: "You have successfully signed in.",
@@ -130,7 +147,7 @@ export const useAuthForm = () => {
         navigate("/courses");
       }
     } catch (error) {
-      console.error("Signin error:", error);
+      console.error("Unexpected signin error:", error);
       toast({
         title: "Error",
         description: "An unexpected error occurred. Please try again.",
