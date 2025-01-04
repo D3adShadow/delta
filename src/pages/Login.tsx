@@ -14,7 +14,6 @@ const Login = () => {
       console.log("Auth state changed:", event, session);
       
       if (event === "SIGNED_IN") {
-        // Create a user record with the full name
         if (session?.user) {
           console.log("Creating user record with metadata:", session.user.user_metadata);
           const { error } = await supabase
@@ -99,8 +98,14 @@ const Login = () => {
             additionalData={{
               full_name: {
                 required: true,
-                label: "Full Name",
-                placeholder: "Enter your full name"
+                label: "Username",
+                placeholder: "Choose a username"
+              },
+              password_confirm: {
+                required: true,
+                type: "password",
+                label: "Confirm Password",
+                placeholder: "Confirm your password"
               }
             }}
           />
