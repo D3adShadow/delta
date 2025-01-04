@@ -11,17 +11,20 @@ interface PointsPackageProps {
 const PointsPackage = ({ amount, price, onPurchase, isLoading }: PointsPackageProps) => {
   return (
     <Card className="p-6 text-center hover:shadow-lg transition-shadow duration-200">
-      <h3 className="text-2xl font-bold text-gray-900 mb-2">
+      <div className="mb-4">
+        <p className="text-3xl font-bold text-primary mb-1">₹{price}</p>
+        <p className="text-sm text-gray-500">for</p>
+      </div>
+      <h3 className="text-2xl font-bold text-gray-900 mb-6">
         {amount} Points
       </h3>
-      <p className="text-lg text-gray-600 mb-4">₹{price}</p>
       <Button
         onClick={() => onPurchase(amount, price)}
         className="w-full"
         variant="default"
         disabled={isLoading}
       >
-        {isLoading ? "Processing..." : "Purchase"}
+        {isLoading ? "Processing..." : "Purchase Now"}
       </Button>
     </Card>
   );
