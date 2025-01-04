@@ -91,7 +91,12 @@ const Points = () => {
 
       if (orderResponse.error) {
         console.error("Error creating order:", orderResponse.error);
-        throw new Error(orderResponse.error.message || 'Failed to create order');
+        toast({
+          title: "Payment initialization failed",
+          description: "Could not create payment order. Please try again.",
+          variant: "destructive",
+        });
+        return;
       }
       
       console.log("Razorpay order created:", orderResponse.data);
@@ -119,7 +124,12 @@ const Points = () => {
 
             if (verifyResponse.error) {
               console.error("Verification error:", verifyResponse.error);
-              throw new Error(verifyResponse.error.message || 'Payment verification failed');
+              toast({
+                title: "Payment verification failed",
+                description: "There was an error verifying your payment. Please contact support.",
+                variant: "destructive",
+              });
+              return;
             }
 
             console.log("Payment verified successfully:", verifyResponse.data);
@@ -129,10 +139,10 @@ const Points = () => {
               description: `${pointsAmount} points have been added to your account`,
             });
           } catch (error) {
-            console.error("Error verifying payment:", error);
+            console.error("Error in payment verification:", error);
             toast({
               title: "Payment verification failed",
-              description: "There was an error verifying your payment",
+              description: "There was an error processing your payment. Please try again.",
               variant: "destructive",
             });
           }
@@ -143,6 +153,16 @@ const Points = () => {
         theme: {
           color: "#6366f1",
         },
+        modal: {
+          ondismiss: function() {
+            console.log("Payment modal dismissed");
+            toast({
+              title: "Payment cancelled",
+              description: "You cancelled the payment process. No points were added.",
+              variant: "destructive",
+            });
+          }
+        }
       };
 
       const razorpay = new window.Razorpay(options);
@@ -151,7 +171,7 @@ const Points = () => {
       console.error("Error initiating payment:", error);
       toast({
         title: "Payment failed",
-        description: error.message || "There was an error initiating the payment",
+        description: error.message || "There was an error initiating the payment. Please try again.",
         variant: "destructive",
       });
     } finally {
