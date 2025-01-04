@@ -11,9 +11,10 @@ interface CourseCardProps {
   instructor: string;
   duration: string;
   enrolled: number;
-  image: string;
+  image?: string;
   points: number;
   onPurchase?: () => void;
+  hideImage?: boolean;
 }
 
 const CourseCard = ({
@@ -26,15 +27,18 @@ const CourseCard = ({
   image,
   points,
   onPurchase,
+  hideImage = false,
 }: CourseCardProps) => {
   const { handlePurchase, isPurchasing } = usePurchaseCourse({ id, points, onPurchase });
 
-  // Use a default image if none is provided
-  const courseImage = image || "https://moqmdhjobloazogqecti.supabase.co/storage/v1/object/public/course-thumbnails/default-course-image.jpg";
-
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white transition-all duration-200 hover:shadow-lg">
-      <CourseImage image={courseImage} title={title} />
+      {!hideImage && (
+        <CourseImage 
+          image={image || "https://moqmdhjobloazogqecti.supabase.co/storage/v1/object/public/course-thumbnails/default-course-image.jpg"} 
+          title={title} 
+        />
+      )}
       
       <div className="flex flex-1 flex-col justify-between p-6">
         <div className="flex-1">

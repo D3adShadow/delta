@@ -24,12 +24,17 @@ const Profile = () => {
     queryKey: ["user", userId],
     queryFn: async () => {
       if (!userId) return null;
+      console.log("Fetching user data for ID:", userId);
       const { data, error } = await supabase
         .from("users")
         .select("*")
         .eq("id", userId)
         .single();
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching user data:", error);
+        throw error;
+      }
+      console.log("User data:", data);
       return data;
     },
     enabled: !!userId,
@@ -48,20 +53,21 @@ const Profile = () => {
             id,
             title,
             description,
-            thumbnail_url,
+            points_price,
             instructor:users!courses_instructor_id_fkey (
               full_name
             )
           )
         `)
-        .eq("user_id", userId);
+        .eq("user_id", userId)
+        .order('purchased_at', { ascending: false });
       
       if (error) {
         console.error("Error fetching purchased courses:", error);
         throw error;
       }
       
-      console.log("Fetched purchased courses:", data);
+      console.log("Purchased courses:", data);
       return data;
     },
     enabled: !!userId,
@@ -106,8 +112,8 @@ const Profile = () => {
               instructor={purchase.courses.instructor?.full_name || "Delta Instructor"}
               duration="8 weeks"
               enrolled={42}
-              image={purchase.courses.thumbnail_url}
               points={purchase.points_spent}
+              hideImage={true}
             />
           ))}
         </div>

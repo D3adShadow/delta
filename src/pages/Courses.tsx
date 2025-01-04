@@ -27,7 +27,7 @@ const Courses = () => {
           *,
           instructor:users!courses_instructor_id_fkey(full_name)
         `)
-        .limit(10); // Increased to 10 courses as requested
+        .limit(10);
       
       if (error) {
         console.error("Error fetching courses:", error);
@@ -67,9 +67,9 @@ const Courses = () => {
             instructor={course.instructor?.full_name || "Delta Instructor"}
             duration="8 weeks"
             enrolled={42}
-            image={course.thumbnail_url}
             points={course.points_price}
             onPurchase={refetch}
+            hideImage={true}
           />
         ))}
       </div>
