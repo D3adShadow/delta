@@ -14,22 +14,28 @@ const MobileMenu = ({ isOpen, session, navItems, onSignOut, onClose }: MobileMen
 
   return (
     <div className="md:hidden">
-      <div className="fixed inset-0 bg-white opacity-100 z-40" onClick={onClose} />
+      <div className="fixed inset-0 bg-white z-40" onClick={onClose} />
       <div className="fixed inset-y-0 right-0 w-full max-w-sm bg-white shadow-lg z-50">
         <div className="flex flex-col h-full bg-white">
-          <div className="pt-20 pb-6 px-4 space-y-6"> {/* Increased top padding here */}
+          <div className="pt-24 pb-6 px-6 space-y-8">
             <div className="flex items-center justify-between">
-              <Link to="/" className="text-2xl font-bold text-gray-900" onClick={onClose}>
+              <Link to="/" className="text-2xl font-bold text-primary-800" onClick={onClose}>
                 Delta
               </Link>
+              <button
+                onClick={onClose}
+                className="p-2 rounded-lg bg-primary-500 text-white hover:bg-primary-600"
+              >
+                <span className="text-xl">×</span>
+              </button>
             </div>
-            <div className="mt-6">
-              <nav className="grid gap-y-4">
+            <div className="mt-8">
+              <nav className="grid gap-y-8">
                 {session && navItems.map((item) => (
                   <Link
                     key={item.name}
                     to={item.path}
-                    className="text-base font-medium text-white bg-primary-500 px-3 py-2 rounded-md"
+                    className="text-xl font-medium text-gray-900 hover:text-primary-500 transition-colors px-2 py-1"
                     onClick={onClose}
                   >
                     {item.name}
@@ -41,14 +47,14 @@ const MobileMenu = ({ isOpen, session, navItems, onSignOut, onClose }: MobileMen
                       onSignOut();
                       onClose();
                     }}
-                    className="w-full text-left px-3 py-2 text-base font-medium text-white bg-primary-500 rounded-md"
+                    className="text-xl text-left font-medium text-gray-900 hover:text-primary-500 transition-colors px-2 py-1"
                   >
                     Sign Out
                   </button>
                 ) : (
                   <Link
                     to="/login"
-                    className="text-base font-medium text-white bg-primary-500 px-3 py-2 rounded-md"
+                    className="text-xl font-medium text-gray-900 hover:text-primary-500 transition-colors px-2 py-1"
                     onClick={onClose}
                   >
                     Sign In
