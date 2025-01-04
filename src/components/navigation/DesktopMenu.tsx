@@ -9,7 +9,7 @@ interface DesktopMenuProps {
 
 const DesktopMenu = ({ session, navItems, onSignOut }: DesktopMenuProps) => {
   return (
-    <div className="hidden md:flex items-center space-x-8">
+    <div className="hidden md:flex items-center gap-6">
       {session && <NavigationLinks items={navItems} />}
       {session ? (
         <button
