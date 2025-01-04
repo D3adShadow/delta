@@ -96,16 +96,13 @@ const Login = () => {
             }}
             showLinks={true}
             view="sign_up"
-            additionalFields={[
-              {
-                key: 'full_name',
-                name: 'full_name',
-                type: 'text',
+            additionalData={{
+              full_name: {
                 required: true,
-                label: 'Full Name',
-                placeholder: 'Enter your full name'
+                label: "Full Name",
+                placeholder: "Enter your full name"
               }
-            ]}
+            }}
           />
         </div>
       </div>
