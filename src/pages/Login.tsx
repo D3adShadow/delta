@@ -82,9 +82,7 @@ const Login = () => {
               variables: {
                 sign_up: {
                   password_label: "Password (min. 6 characters)",
-                  password_input_placeholder: "Enter your password (min. 6 characters)",
-                  full_name_label: "Full Name",
-                  full_name_placeholder: "Enter your full name",
+                  password_input_placeholder: "Enter your password (min. 6 characters)"
                 }
               }
             }}
