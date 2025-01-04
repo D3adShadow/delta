@@ -16,11 +16,12 @@ const CourseTest = ({ courseId, onComplete }: CourseTestProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const { data: questions, isLoading } = useQuery({
+  const { data: questions, isLoading, error } = useQuery({
     queryKey: ["test-questions", courseId],
     queryFn: async () => {
       console.log("Starting to fetch test questions for course:", courseId);
       
+      // First verify the course exists
       const { data: courseData, error: courseError } = await supabase
         .from("courses")
         .select("title")
@@ -29,24 +30,30 @@ const CourseTest = ({ courseId, onComplete }: CourseTestProps) => {
 
       if (courseError) {
         console.error("Error fetching course:", courseError);
-        throw courseError;
+        throw new Error(`Course not found: ${courseError.message}`);
       }
 
       console.log("Found course:", courseData);
 
-      const { data, error } = await supabase
+      // Then fetch the test questions
+      const { data: questionsData, error: questionsError } = await supabase
         .from("test_questions")
         .select("*")
         .eq("course_id", courseId)
         .order("created_at");
 
-      if (error) {
-        console.error("Error fetching test questions:", error);
-        throw error;
+      if (questionsError) {
+        console.error("Error fetching test questions:", questionsError);
+        throw new Error(`Failed to fetch test questions: ${questionsError.message}`);
       }
 
-      console.log(`Fetched ${data.length} test questions for course:`, courseId);
-      return data;
+      if (!questionsData || questionsData.length === 0) {
+        console.log("No test questions found for course:", courseId);
+        return [];
+      }
+
+      console.log(`Fetched ${questionsData.length} test questions:`, questionsData);
+      return questionsData;
     },
   });
 
@@ -98,9 +105,15 @@ const CourseTest = ({ courseId, onComplete }: CourseTestProps) => {
     const maxScore = questions.reduce((total, q) => total + q.marks, 0);
 
     try {
-      console.log("Submitting test result:", { courseId, score, maxScore });
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
+      console.log("Submitting test result:", { courseId, score, maxScore, userId: user.id });
       const { error } = await supabase.from("test_results").insert({
         course_id: courseId,
+        user_id: user.id,
         score,
         max_score: maxScore,
       });
@@ -132,6 +145,17 @@ const CourseTest = ({ courseId, onComplete }: CourseTestProps) => {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-8">
+        <h3 className="text-lg font-medium text-red-600">Error loading test</h3>
+        <p className="text-gray-600 mt-2">
+          {error instanceof Error ? error.message : "Failed to load test questions"}
+        </p>
       </div>
     );
   }
