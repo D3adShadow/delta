@@ -20,7 +20,7 @@ const Profile = () => {
     checkAuth();
   }, [navigate]);
 
-  const { data: userData } = useQuery({
+  const { data: userData, isLoading: isUserLoading } = useQuery({
     queryKey: ["user", userId],
     queryFn: async () => {
       if (!userId) return null;
@@ -35,10 +35,11 @@ const Profile = () => {
     enabled: !!userId,
   });
 
-  const { data: purchasedCourses } = useQuery({
+  const { data: purchasedCourses, isLoading: isCoursesLoading } = useQuery({
     queryKey: ["purchased-courses", userId],
     queryFn: async () => {
       if (!userId) return [];
+      console.log("Fetching purchased courses for user:", userId);
       const { data, error } = await supabase
         .from("course_purchases")
         .select(`
@@ -52,13 +53,19 @@ const Profile = () => {
         `)
         .eq("user_id", userId)
         .order('purchased_at', { ascending: false });
-      if (error) throw error;
+      
+      if (error) {
+        console.error("Error fetching purchased courses:", error);
+        throw error;
+      }
+      
+      console.log("Fetched purchased courses:", data);
       return data;
     },
     enabled: !!userId,
   });
 
-  if (!userData) {
+  if (isUserLoading || isCoursesLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-500"></div>
@@ -71,9 +78,9 @@ const Profile = () => {
       {/* Profile Header */}
       <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold text-gray-900">{userData.full_name}</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{userData?.full_name}</h1>
           <p className="text-lg text-gray-600">
-            Available Points: <span className="font-semibold text-primary-600">{userData.points || 0}</span>
+            Available Points: <span className="font-semibold text-primary-600">{userData?.points || 0}</span>
           </p>
         </div>
       </div>
@@ -91,19 +98,19 @@ const Profile = () => {
           {purchasedCourses?.map((purchase) => (
             <CourseCard
               key={purchase.course_id}
-              id={purchase.course_id}
+              id={purchase.courses.id}
               title={purchase.courses.title}
               description={purchase.courses.description}
               instructor={purchase.courses.instructor?.full_name || "Delta Instructor"}
               duration="8 weeks"
               enrolled={42}
-              image={purchase.courses.thumbnail_url || "/placeholder.svg"}
+              image={purchase.courses.thumbnail_url}
               points={purchase.points_spent}
             />
           ))}
         </div>
 
-        {purchasedCourses?.length === 0 && (
+        {(!purchasedCourses || purchasedCourses.length === 0) && (
           <div className="text-center py-12">
             <h3 className="text-lg font-medium text-gray-900">No courses purchased yet</h3>
             <p className="mt-2 text-gray-600">
