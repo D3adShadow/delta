@@ -115,13 +115,8 @@ const Login = () => {
               full_name: {
                 required: true,
                 label: "Username",
-                placeholder: "Choose a username"
-              },
-              password_confirm: {
-                required: true,
-                type: "password",
-                label: "Confirm Password",
-                placeholder: "Confirm your password"
+                placeholder: "Choose a username",
+                type: "text",
               }
             }}
           />
