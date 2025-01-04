@@ -1,7 +1,1 @@
 project_id = "moqmdhjobloazogqecti"
-
-[functions.create-phonepe-order]
-verify_jwt = true
-
-[functions.verify-phonepe-payment]
-verify_jwt = true

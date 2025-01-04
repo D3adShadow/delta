@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import PointsPackage from "./PointsPackage";
-import { usePhonePePayment } from "@/hooks/usePhonePePayment";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 const POINTS_PACKAGES = [
   { amount: 100, price: 100 },
@@ -13,9 +14,22 @@ interface PointsPackagesProps {
 }
 
 const PointsPackages = ({ onPurchaseSuccess }: PointsPackagesProps) => {
-  const { handlePurchasePoints, isLoading } = usePhonePePayment({
-    onSuccess: onPurchaseSuccess,
-  });
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+
+  const handlePurchasePoints = async (pointsAmount: number, priceInRupees: number) => {
+    setIsLoading(true);
+    try {
+      // Temporary placeholder for payment integration
+      toast({
+        title: "Payment Integration Required",
+        description: "Payment gateway integration is currently unavailable.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="mb-12">
