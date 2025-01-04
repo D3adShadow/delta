@@ -43,16 +43,18 @@ const Profile = () => {
       const { data, error } = await supabase
         .from("course_purchases")
         .select(`
-          course_id,
-          points_spent,
-          purchased_at,
+          *,
           courses (
-            *,
-            instructor:users(full_name)
+            id,
+            title,
+            description,
+            thumbnail_url,
+            instructor:users!courses_instructor_id_fkey (
+              full_name
+            )
           )
         `)
-        .eq("user_id", userId)
-        .order('purchased_at', { ascending: false });
+        .eq("user_id", userId);
       
       if (error) {
         console.error("Error fetching purchased courses:", error);

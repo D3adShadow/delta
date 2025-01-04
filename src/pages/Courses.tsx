@@ -27,7 +27,7 @@ const Courses = () => {
           *,
           instructor:users!courses_instructor_id_fkey(full_name)
         `)
-        .limit(3); // Reduced to 3 courses to prevent jittering
+        .limit(10); // Increased to 10 courses as requested
       
       if (error) {
         console.error("Error fetching courses:", error);
