@@ -10,11 +10,28 @@ const Login = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event, session);
+      
       if (event === "SIGNED_IN") {
+        // Create a user record with the full name
+        if (session?.user) {
+          const { error } = await supabase
+            .from('users')
+            .insert([
+              {
+                id: session.user.id,
+                full_name: session.user.user_metadata.full_name || 'Anonymous User',
+              }
+            ]);
+
+          if (error) {
+            console.error("Error creating user record:", error);
+          }
+        }
+
         toast({
-          title: "Welcome back!",
+          title: "Welcome!",
           description: "You have successfully signed in.",
         });
         navigate("/courses");
@@ -65,9 +82,22 @@ const Login = () => {
               variables: {
                 sign_up: {
                   password_label: "Password (min. 6 characters)",
-                  password_input_placeholder: "Enter your password (min. 6 characters)"
+                  password_input_placeholder: "Enter your password (min. 6 characters)",
+                  full_name_label: "Full Name",
+                  full_name_placeholder: "Enter your full name",
                 }
               }
+            }}
+            options={{
+              signUpFields: [
+                {
+                  name: 'full_name',
+                  label: 'Full Name',
+                  type: 'text',
+                  placeholder: 'Enter your full name',
+                  required: true,
+                }
+              ]
             }}
           />
         </div>
