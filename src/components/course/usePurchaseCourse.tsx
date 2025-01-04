@@ -28,13 +28,13 @@ export const usePurchaseCourse = ({ id, points, onPurchase }: UsePurchaseCourseP
         return;
       }
 
-      // Check if user has already purchased the course
+      // Check if user has already purchased the course using maybeSingle() instead of single()
       const { data: existingPurchase } = await supabase
         .from("course_purchases")
         .select()
         .eq("user_id", user.id)
         .eq("course_id", id)
-        .single();
+        .maybeSingle();
 
       if (existingPurchase) {
         toast({
@@ -45,23 +45,15 @@ export const usePurchaseCourse = ({ id, points, onPurchase }: UsePurchaseCourseP
         return;
       }
 
-      // Get user profile
+      // Get user profile using maybeSingle()
       const { data: userData, error: userError } = await supabase
         .from("users")
-        .upsert({
-          id: user.id,
-          full_name: user.user_metadata.full_name || "User",
-          points: 500,
-        })
         .select()
-        .single();
+        .eq("id", user.id)
+        .maybeSingle();
 
-      if (userError) {
+      if (userError || !userData) {
         console.error("Error ensuring user profile:", userError);
-        throw new Error("Could not access user profile");
-      }
-
-      if (!userData) {
         toast({
           title: "Error",
           description: "Could not access user profile",
