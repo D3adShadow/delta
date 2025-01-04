@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import UserHeader from "@/components/profile/UserHeader";
-import UsersList from "@/components/profile/UsersList";
 import PurchasedCourses from "@/components/profile/PurchasedCourses";
 
 const Profile = () => {
@@ -42,24 +41,6 @@ const Profile = () => {
     enabled: !!userId,
   });
 
-  const { data: allUsers, isLoading: isAllUsersLoading } = useQuery({
-    queryKey: ["all-users"],
-    queryFn: async () => {
-      console.log("Fetching all users");
-      const { data, error } = await supabase
-        .from("users")
-        .select("*")
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        console.error("Error fetching all users:", error);
-        throw error;
-      }
-      console.log("All users:", data);
-      return data;
-    },
-  });
-
   const { data: purchasedCourses, isLoading: isCoursesLoading } = useQuery({
     queryKey: ["purchased-courses", userId],
     queryFn: async () => {
@@ -93,7 +74,7 @@ const Profile = () => {
     enabled: !!userId,
   });
 
-  if (isUserLoading || isCoursesLoading || isAllUsersLoading) {
+  if (isUserLoading || isCoursesLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-500"></div>
@@ -104,7 +85,6 @@ const Profile = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <UserHeader userData={userData} />
-      <UsersList users={allUsers} currentUserId={userId} />
       <PurchasedCourses courses={purchasedCourses} />
     </div>
   );
