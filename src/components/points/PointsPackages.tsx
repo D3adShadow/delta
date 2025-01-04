@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import PointsPackage from "./PointsPackage";
-import { useRazorpayPayment } from "@/hooks/useRazorpayPayment";
+import { usePhonePePayment } from "@/hooks/usePhonePePayment";
 
 const POINTS_PACKAGES = [
   { amount: 100, price: 100 },
@@ -13,7 +13,7 @@ interface PointsPackagesProps {
 }
 
 const PointsPackages = ({ onPurchaseSuccess }: PointsPackagesProps) => {
-  const { handlePurchasePoints, isLoading } = useRazorpayPayment({
+  const { handlePurchasePoints, isLoading } = usePhonePePayment({
     onSuccess: onPurchaseSuccess,
   });
 
