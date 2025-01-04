@@ -103,7 +103,7 @@ export const useAuthForm = () => {
           title: "Welcome!",
           description: "Your account has been created successfully.",
         });
-        navigate("/courses");
+        navigate("/"); // Changed from /courses to /
       }
     } catch (error) {
       console.error("Unexpected signup error:", error);
@@ -144,7 +144,7 @@ export const useAuthForm = () => {
           title: "Welcome back!",
           description: "You have successfully signed in.",
         });
-        navigate("/courses");
+        navigate("/"); // Changed from /courses to /
       }
     } catch (error) {
       console.error("Unexpected signin error:", error);

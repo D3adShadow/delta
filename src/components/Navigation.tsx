@@ -49,6 +49,7 @@ const Navigation = () => {
           description: "You have been signed out successfully",
         });
       } else if (event === 'SIGNED_IN') {
+        navigate("/"); // Changed from /courses to /
         toast({
           title: "Signed in",
           description: "Welcome back!",
