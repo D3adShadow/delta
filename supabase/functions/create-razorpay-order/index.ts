@@ -1,5 +1,5 @@
-import Razorpay from "https://esm.sh/razorpay@2.9.2";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import Razorpay from "https://esm.sh/razorpay@2.9.2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -14,10 +14,20 @@ serve(async (req) => {
 
   try {
     const { amount, userId } = await req.json();
-    console.log(`Creating order for user ${userId} with amount ${amount}`);
+    console.log('Received request:', { amount, userId });
 
     if (!amount || !userId) {
-      throw new Error('Amount and userId are required');
+      console.error('Missing required parameters:', { amount, userId });
+      return new Response(
+        JSON.stringify({ error: 'Amount and userId are required' }),
+        { 
+          status: 400,
+          headers: { 
+            ...corsHeaders,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
     }
 
     const razorpay = new Razorpay({
@@ -28,10 +38,14 @@ serve(async (req) => {
     // Amount should be in smallest currency unit (paise for INR)
     const amountInPaise = amount * 100;
 
+    console.log('Creating Razorpay order:', { amountInPaise, userId });
     const order = await razorpay.orders.create({
       amount: amountInPaise,
       currency: 'INR',
       receipt: `order_${Date.now()}`,
+      notes: {
+        userId: userId
+      }
     });
 
     console.log('Razorpay order created:', order);

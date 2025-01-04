@@ -83,9 +83,12 @@ const Points = () => {
 
       console.log("Creating Razorpay order for user:", user.id);
       
-      // Create Razorpay order
+      // Create Razorpay order with proper request body
       const orderResponse = await supabase.functions.invoke('create-razorpay-order', {
-        body: { amount: priceInRupees, userId: user.id },
+        body: { 
+          amount: priceInRupees,
+          userId: user.id 
+        },
       });
 
       if (orderResponse.error) {
@@ -98,7 +101,7 @@ const Points = () => {
 
       // Initialize Razorpay payment
       const options = {
-        key: "rzp_test_51Ix3QI9qwYH2Ez", // Replace with your test key
+        key: "rzp_test_51Ix3QI9qwYH2Ez",
         amount: order.amount,
         currency: "INR",
         name: "Delta Learning",
@@ -164,7 +167,6 @@ const Points = () => {
     <div className="min-h-screen bg-gray-50">
       <Navigation />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-24">
-        {/* Points Overview Card */}
         <Card className="bg-white p-6 mb-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
             <div>
@@ -180,7 +182,6 @@ const Points = () => {
           </div>
         </Card>
 
-        {/* Points Packages */}
         <div className="mb-12">
           <h2 className="text-xl font-semibold text-gray-900 mb-6">Purchase Points</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -206,7 +207,6 @@ const Points = () => {
           </div>
         </div>
 
-        {/* Transaction History */}
         <TransactionHistory />
       </div>
     </div>
