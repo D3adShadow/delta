@@ -12,6 +12,7 @@ const POINTS_PACKAGES = [
 
 const Points = () => {
   const [userPoints, setUserPoints] = useState<number | null>(null);
+  const [userName, setUserName] = useState<string>("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -22,16 +23,16 @@ const Points = () => {
         navigate("/login");
         return;
       }
-      fetchUserPoints(session.user.id);
+      fetchUserData(session.user.id);
     };
 
     checkAuth();
   }, [navigate]);
 
-  const fetchUserPoints = async (userId: string) => {
+  const fetchUserData = async (userId: string) => {
     const { data, error } = await supabase
       .from("users")
-      .select("points")
+      .select("points, full_name")
       .eq("id", userId)
       .single();
 
@@ -41,6 +42,7 @@ const Points = () => {
     }
 
     setUserPoints(data.points);
+    setUserName(data.full_name);
   };
 
   const handlePurchasePoints = async (amount: number) => {
@@ -55,8 +57,6 @@ const Points = () => {
         return;
       }
 
-      // In a real app, you would integrate with a payment provider here
-      // For now, we'll just add the points directly
       const { data, error } = await supabase
         .from("users")
         .update({ points: (userPoints || 0) + amount })
@@ -82,10 +82,11 @@ const Points = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="text-center mb-12">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">Points Balance</h1>
-        <p className="text-xl text-gray-600">
-          Current Balance: <span className="font-bold text-primary-600">{userPoints || 0}</span> points
+      {/* Header Section */}
+      <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">{userName}'s Points</h1>
+        <p className="text-lg text-gray-600 mt-2">
+          Current Balance: <span className="font-semibold text-primary-600">{userPoints || 0}</span> points
         </p>
       </div>
 

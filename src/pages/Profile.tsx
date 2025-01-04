@@ -95,8 +95,8 @@ const Profile = () => {
               title={purchase.courses.title}
               description={purchase.courses.description}
               instructor={purchase.courses.instructor?.full_name || "Delta Instructor"}
-              duration="8 weeks" // This could be made dynamic if we add duration to the courses table
-              enrolled={42} // This could be calculated from course_purchases if needed
+              duration="8 weeks"
+              enrolled={42}
               image={purchase.courses.thumbnail_url || "/placeholder.svg"}
               points={purchase.points_spent}
             />
