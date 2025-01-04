@@ -40,6 +40,24 @@ const Profile = () => {
     enabled: !!userId,
   });
 
+  const { data: allUsers, isLoading: isAllUsersLoading } = useQuery({
+    queryKey: ["all-users"],
+    queryFn: async () => {
+      console.log("Fetching all users");
+      const { data, error } = await supabase
+        .from("users")
+        .select("*")
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error("Error fetching all users:", error);
+        throw error;
+      }
+      console.log("All users:", data);
+      return data;
+    },
+  });
+
   const { data: purchasedCourses, isLoading: isCoursesLoading } = useQuery({
     queryKey: ["purchased-courses", userId],
     queryFn: async () => {
@@ -73,7 +91,7 @@ const Profile = () => {
     enabled: !!userId,
   });
 
-  if (isUserLoading || isCoursesLoading) {
+  if (isUserLoading || isCoursesLoading || isAllUsersLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-500"></div>
@@ -90,6 +108,31 @@ const Profile = () => {
           <p className="text-lg text-gray-600">
             Available Points: <span className="font-semibold text-primary-600">{userData?.points || 0}</span>
           </p>
+        </div>
+      </div>
+
+      {/* All Users Section */}
+      <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+        <h2 className="text-2xl font-semibold text-gray-900 mb-4">All Users</h2>
+        <div className="divide-y divide-gray-200">
+          {allUsers?.map((user) => (
+            <div key={user.id} className="py-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900">{user.full_name}</h3>
+                  <p className="text-sm text-gray-500">
+                    Points: {user.points}
+                    {user.is_instructor && " • Instructor"}
+                  </p>
+                </div>
+                {user.id === userId && (
+                  <span className="inline-flex items-center rounded-full bg-primary-50 px-2 py-1 text-xs font-medium text-primary-700">
+                    You
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
