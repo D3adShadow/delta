@@ -16,6 +16,7 @@ const Login = () => {
       if (event === "SIGNED_IN") {
         // Create a user record with the full name
         if (session?.user) {
+          console.log("Creating user record with metadata:", session.user.user_metadata);
           const { error } = await supabase
             .from('users')
             .insert([
@@ -82,19 +83,26 @@ const Login = () => {
               variables: {
                 sign_up: {
                   password_label: "Password (min. 6 characters)",
-                  password_input_placeholder: "Enter your password (min. 6 characters)"
+                  password_input_placeholder: "Enter your password (min. 6 characters)",
+                  email_label: "Email address",
+                  email_input_placeholder: "Your email address",
+                  button_label: "Sign up",
+                  link_text: "Don't have an account? Sign up",
                 }
               }
             }}
             showLinks={true}
             view="sign_up"
-            additionalData={{
-              full_name: {
-                required: true,
+            additionalData={[
+              {
+                key: "full_name",
+                name: "full_name",
+                type: "text",
                 label: "Full Name",
-                placeholder: "Enter your full name"
+                placeholder: "Enter your full name",
+                required: true,
               }
-            }}
+            ]}
           />
         </div>
       </div>
