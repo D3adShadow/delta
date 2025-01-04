@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import UserHeader from "@/components/profile/UserHeader";
 import PurchasedCourses from "@/components/profile/PurchasedCourses";
+import Navigation from "@/components/Navigation";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -83,9 +84,12 @@ const Profile = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <UserHeader userData={userData} />
-      <PurchasedCourses courses={purchasedCourses} />
+    <div className="min-h-screen bg-white">
+      <Navigation />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-24">
+        <UserHeader userData={userData} />
+        <PurchasedCourses courses={purchasedCourses} />
+      </div>
     </div>
   );
 };
