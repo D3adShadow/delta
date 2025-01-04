@@ -18,6 +18,7 @@ export const usePurchaseCourse = ({ id, points, onPurchase }: UsePurchaseCourseP
     
     setIsPurchasing(true);
     try {
+      console.log("Starting purchase process for course:", id);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast({
@@ -28,13 +29,30 @@ export const usePurchaseCourse = ({ id, points, onPurchase }: UsePurchaseCourseP
         return;
       }
 
-      // Check if user has already purchased the course using maybeSingle() instead of single()
-      const { data: existingPurchase } = await supabase
+      // Validate UUID format
+      if (!id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+        console.error("Invalid course ID format:", id);
+        toast({
+          title: "Invalid course",
+          description: "Could not process this course purchase",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log("Checking for existing purchase...");
+      // Check if user has already purchased the course
+      const { data: existingPurchase, error: purchaseCheckError } = await supabase
         .from("course_purchases")
         .select()
         .eq("user_id", user.id)
         .eq("course_id", id)
         .maybeSingle();
+
+      if (purchaseCheckError) {
+        console.error("Error checking existing purchase:", purchaseCheckError);
+        throw new Error("Failed to check purchase status");
+      }
 
       if (existingPurchase) {
         toast({
@@ -45,7 +63,8 @@ export const usePurchaseCourse = ({ id, points, onPurchase }: UsePurchaseCourseP
         return;
       }
 
-      // Get user profile using maybeSingle()
+      console.log("Fetching user profile...");
+      // Get user profile
       const { data: userData, error: userError } = await supabase
         .from("users")
         .select()
@@ -71,6 +90,7 @@ export const usePurchaseCourse = ({ id, points, onPurchase }: UsePurchaseCourseP
         return;
       }
 
+      console.log("Creating purchase record...");
       // Create purchase record
       const { error: purchaseError } = await supabase
         .from("course_purchases")
@@ -93,6 +113,7 @@ export const usePurchaseCourse = ({ id, points, onPurchase }: UsePurchaseCourseP
         throw new Error("Failed to purchase course");
       }
 
+      console.log("Updating user points...");
       // Update user points
       const { error: updateError } = await supabase
         .from("users")
@@ -104,6 +125,7 @@ export const usePurchaseCourse = ({ id, points, onPurchase }: UsePurchaseCourseP
         throw new Error("Failed to update points");
       }
 
+      console.log("Purchase completed successfully!");
       toast({
         title: "Course purchased successfully!",
         description: "You can now access this course from your profile",
