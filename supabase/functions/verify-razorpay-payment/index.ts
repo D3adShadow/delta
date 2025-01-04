@@ -28,9 +28,23 @@ serve(async (req) => {
       pointsAmount,
     });
 
+    const razorpayKeyId = Deno.env.get('RAZORPAY_KEY_ID');
+    const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET');
+
+    if (!razorpayKeyId || !razorpayKeySecret) {
+      console.error('Razorpay credentials not found');
+      return new Response(
+        JSON.stringify({ error: 'Razorpay configuration is missing' }),
+        { 
+          status: 500,
+          headers: corsHeaders,
+        }
+      );
+    }
+
     const razorpay = new Razorpay({
-      key_id: Deno.env.get('RAZORPAY_KEY_ID') || '',
-      key_secret: Deno.env.get('RAZORPAY_KEY_SECRET') || '',
+      key_id: razorpayKeyId,
+      key_secret: razorpayKeySecret,
     });
 
     // Verify payment signature

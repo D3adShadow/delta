@@ -7,6 +7,12 @@ import TransactionHistory from "@/components/points/TransactionHistory";
 import PointsOverview from "@/components/points/PointsOverview";
 import PointsPackage from "@/components/points/PointsPackage";
 
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
 const POINTS_PACKAGES = [
   { amount: 100, price: 100 },
   { amount: 500, price: 450 },
@@ -77,10 +83,10 @@ const Points = () => {
       console.log("Creating Razorpay order for user:", user.id);
       
       const orderResponse = await supabase.functions.invoke('create-razorpay-order', {
-        body: JSON.stringify({ 
+        body: { 
           amount: priceInRupees,
           userId: user.id 
-        }),
+        },
       });
 
       if (orderResponse.error) {
@@ -92,7 +98,7 @@ const Points = () => {
       const order = orderResponse.data;
 
       const options = {
-        key: "rzp_test_51Ix3QI9qwYH2Ez", // Updated Razorpay test key
+        key: "rzp_test_51Ix3QI9qwYH2Ez",
         amount: order.amount,
         currency: "INR",
         name: "Delta Learning",
@@ -107,7 +113,7 @@ const Points = () => {
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
                 userId: user.id,
-                pointsAmount: (userPoints || 0) + pointsAmount,
+                pointsAmount: pointsAmount,
               },
             });
 
@@ -117,7 +123,7 @@ const Points = () => {
             }
 
             console.log("Payment verified successfully:", verifyResponse.data);
-            setUserPoints(verifyResponse.data.points);
+            setUserPoints((prev) => (prev || 0) + pointsAmount);
             toast({
               title: "Points purchased successfully!",
               description: `${pointsAmount} points have been added to your account`,

@@ -33,10 +33,24 @@ serve(async (req) => {
       );
     }
 
+    const razorpayKeyId = Deno.env.get('RAZORPAY_KEY_ID');
+    const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET');
+
+    if (!razorpayKeyId || !razorpayKeySecret) {
+      console.error('Razorpay credentials not found');
+      return new Response(
+        JSON.stringify({ error: 'Razorpay configuration is missing' }),
+        { 
+          status: 500,
+          headers: corsHeaders,
+        }
+      );
+    }
+
     console.log('Creating Razorpay instance with credentials');
     const razorpay = new Razorpay({
-      key_id: Deno.env.get('RAZORPAY_KEY_ID') || '',
-      key_secret: Deno.env.get('RAZORPAY_KEY_SECRET') || '',
+      key_id: razorpayKeyId,
+      key_secret: razorpayKeySecret,
     });
 
     // Amount should be in smallest currency unit (paise for INR)
@@ -73,7 +87,7 @@ serve(async (req) => {
         details: error.stack 
       }),
       { 
-        status: 400,
+        status: 500,
         headers: corsHeaders,
       }
     );
