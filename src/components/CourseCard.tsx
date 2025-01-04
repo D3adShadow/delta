@@ -15,6 +15,7 @@ interface CourseCardProps {
   points: number;
   onPurchase?: () => void;
   hideImage?: boolean;
+  hidePurchaseButton?: boolean;
 }
 
 const CourseCard = ({
@@ -28,6 +29,7 @@ const CourseCard = ({
   points,
   onPurchase,
   hideImage = false,
+  hidePurchaseButton = false,
 }: CourseCardProps) => {
   const { handlePurchase, isPurchasing } = usePurchaseCourse({ id, points, onPurchase });
 
@@ -51,16 +53,18 @@ const CourseCard = ({
           instructor={instructor}
         />
         
-        <div className="mt-4 flex justify-end">
-          <Button 
-            onClick={handlePurchase} 
-            variant="default" 
-            size="sm"
-            disabled={isPurchasing}
-          >
-            {isPurchasing ? "Processing..." : "Purchase"}
-          </Button>
-        </div>
+        {!hidePurchaseButton && (
+          <div className="mt-4 flex justify-end">
+            <Button 
+              onClick={handlePurchase} 
+              variant="default" 
+              size="sm"
+              disabled={isPurchasing}
+            >
+              {isPurchasing ? "Processing..." : "Purchase"}
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
