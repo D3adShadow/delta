@@ -71,8 +71,8 @@ const Courses = () => {
               duration="8 weeks"
               enrolled={42}
               points={course.points_price}
+              image={course.thumbnail_url}
               onPurchase={refetch}
-              hideImage={true}
             />
           ))}
         </div>
