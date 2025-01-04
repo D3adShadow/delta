@@ -12,7 +12,10 @@ const Login = () => {
   const { toast } = useToast();
   const [showUsernameInput, setShowUsernameInput] = useState(false);
   const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [session, setSession] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
@@ -50,6 +53,33 @@ const Login = () => {
 
     return () => subscription.unsubscribe();
   }, [navigate, toast]);
+
+  const handleEmailSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    if (data.user) {
+      setSession(data.session);
+      setShowUsernameInput(true);
+    }
+
+    setIsLoading(false);
+  };
 
   const handleUsernameSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -129,10 +159,42 @@ const Login = () => {
             Welcome to Delta
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Sign in with Google to start learning
+            Sign in or create an account
           </p>
         </div>
-        <div className="mt-8">
+        
+        <form onSubmit={handleEmailSignUp} className="mt-8 space-y-6">
+          <div className="space-y-4">
+            <Input
+              type="email"
+              placeholder="Email address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <Input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? "Creating account..." : "Sign up with email"}
+          </Button>
+        </form>
+
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-gray-50 text-gray-500">Or continue with</span>
+          </div>
+        </div>
+
+        <div className="mt-6">
           <Auth
             supabaseClient={supabase}
             appearance={{
