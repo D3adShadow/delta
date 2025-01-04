@@ -17,7 +17,7 @@ const MobileMenu = ({ isOpen, session, navItems, onSignOut, onClose }: MobileMen
       <div className="fixed inset-0 bg-white opacity-100 z-40" onClick={onClose} />
       <div className="fixed inset-y-0 right-0 w-full max-w-sm bg-white shadow-lg z-50">
         <div className="flex flex-col h-full bg-white">
-          <div className="pt-5 pb-6 px-4 space-y-6">
+          <div className="pt-20 pb-6 px-4 space-y-6"> {/* Increased top padding here */}
             <div className="flex items-center justify-between">
               <Link to="/" className="text-2xl font-bold text-gray-900" onClick={onClose}>
                 Delta
