@@ -1,17 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/Navigation";
 import TransactionHistory from "@/components/points/TransactionHistory";
-import { Card } from "@/components/ui/card";
-
-declare global {
-  interface Window {
-    Razorpay: any;
-  }
-}
+import PointsOverview from "@/components/points/PointsOverview";
+import PointsPackage from "@/components/points/PointsPackage";
 
 const POINTS_PACKAGES = [
   { amount: 100, price: 100 },
@@ -27,7 +21,6 @@ const Points = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Load Razorpay SDK
     const script = document.createElement('script');
     script.src = 'https://checkout.razorpay.com/v1/checkout.js';
     script.async = true;
@@ -83,12 +76,11 @@ const Points = () => {
 
       console.log("Creating Razorpay order for user:", user.id);
       
-      // Create Razorpay order with proper request body
       const orderResponse = await supabase.functions.invoke('create-razorpay-order', {
-        body: { 
+        body: JSON.stringify({ 
           amount: priceInRupees,
           userId: user.id 
-        },
+        }),
       });
 
       if (orderResponse.error) {
@@ -99,7 +91,6 @@ const Points = () => {
       console.log("Razorpay order created:", orderResponse.data);
       const order = orderResponse.data;
 
-      // Initialize Razorpay payment
       const options = {
         key: "rzp_test_51Ix3QI9qwYH2Ez",
         amount: order.amount,
@@ -110,7 +101,6 @@ const Points = () => {
         handler: async function (response: any) {
           console.log("Payment successful, verifying...", response);
           try {
-            // Verify payment and update points
             const verifyResponse = await supabase.functions.invoke('verify-razorpay-payment', {
               body: {
                 razorpay_order_id: response.razorpay_order_id,
@@ -167,42 +157,19 @@ const Points = () => {
     <div className="min-h-screen bg-gray-50">
       <Navigation />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-24">
-        <Card className="bg-white p-6 mb-8">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">{userName}'s Wallet</h1>
-              <p className="text-lg text-gray-600 mt-2">
-                Available Balance:{" "}
-                <span className="font-semibold text-primary-600">
-                  {userPoints || 0}
-                </span>{" "}
-                points
-              </p>
-            </div>
-          </div>
-        </Card>
+        <PointsOverview userName={userName} points={userPoints} />
 
         <div className="mb-12">
           <h2 className="text-xl font-semibold text-gray-900 mb-6">Purchase Points</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {POINTS_PACKAGES.map((pkg) => (
-              <Card
+              <PointsPackage
                 key={pkg.amount}
-                className="p-6 text-center hover:shadow-lg transition-shadow duration-200"
-              >
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                  {pkg.amount} Points
-                </h3>
-                <p className="text-lg text-gray-600 mb-4">₹{pkg.price}</p>
-                <Button
-                  onClick={() => handlePurchasePoints(pkg.amount, pkg.price)}
-                  className="w-full"
-                  variant="default"
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Processing..." : "Purchase"}
-                </Button>
-              </Card>
+                amount={pkg.amount}
+                price={pkg.price}
+                onPurchase={handlePurchasePoints}
+                isLoading={isLoading}
+              />
             ))}
           </div>
         </div>
