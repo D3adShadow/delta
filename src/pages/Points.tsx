@@ -30,6 +30,7 @@ const Points = () => {
   }, [navigate]);
 
   const fetchUserData = async (userId: string) => {
+    console.log("Fetching user data for ID:", userId);
     const { data, error } = await supabase
       .from("users")
       .select("points, full_name")
@@ -41,6 +42,7 @@ const Points = () => {
       return;
     }
 
+    console.log("User data fetched:", data);
     setUserPoints(data.points);
     setUserName(data.full_name);
   };
@@ -57,6 +59,7 @@ const Points = () => {
         return;
       }
 
+      console.log("Purchasing points:", amount);
       const { data, error } = await supabase
         .from("users")
         .update({ points: (userPoints || 0) + amount })
@@ -65,6 +68,7 @@ const Points = () => {
 
       if (error) throw error;
 
+      console.log("Points updated:", data);
       setUserPoints(data[0].points);
       toast({
         title: "Points purchased successfully!",
