@@ -91,7 +91,7 @@ const Points = () => {
 
       if (orderResponse.error) {
         console.error("Error creating order:", orderResponse.error);
-        throw new Error(orderResponse.error.message);
+        throw new Error(orderResponse.error.message || 'Failed to create order');
       }
       
       console.log("Razorpay order created:", orderResponse.data);
@@ -119,7 +119,7 @@ const Points = () => {
 
             if (verifyResponse.error) {
               console.error("Verification error:", verifyResponse.error);
-              throw new Error(verifyResponse.error.message);
+              throw new Error(verifyResponse.error.message || 'Payment verification failed');
             }
 
             console.log("Payment verified successfully:", verifyResponse.data);
@@ -151,7 +151,7 @@ const Points = () => {
       console.error("Error initiating payment:", error);
       toast({
         title: "Payment failed",
-        description: "There was an error initiating the payment",
+        description: error.message || "There was an error initiating the payment",
         variant: "destructive",
       });
     } finally {

@@ -36,8 +36,9 @@ serve(async (req) => {
     const razorpayKeyId = Deno.env.get('RAZORPAY_KEY_ID');
     const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET');
 
+    console.log('Checking Razorpay credentials...');
     if (!razorpayKeyId || !razorpayKeySecret) {
-      console.error('Razorpay credentials not found');
+      console.error('Razorpay credentials missing');
       return new Response(
         JSON.stringify({ error: 'Razorpay configuration is missing' }),
         { 
@@ -47,33 +48,28 @@ serve(async (req) => {
       );
     }
 
-    console.log('Creating Razorpay instance with credentials');
+    console.log('Creating Razorpay instance...');
     const razorpay = new Razorpay({
       key_id: razorpayKeyId,
       key_secret: razorpayKeySecret,
     });
 
     // Amount should be in smallest currency unit (paise for INR)
-    const amountInPaise = amount * 100;
-    console.log('Calculated amount in paise:', amountInPaise);
+    const amountInPaise = Math.round(amount * 100);
+    console.log('Amount in paise:', amountInPaise);
 
-    console.log('Creating Razorpay order with params:', {
-      amount: amountInPaise,
-      currency: 'INR',
-      receipt: `order_${Date.now()}`,
-      userId
-    });
-
-    const order = await razorpay.orders.create({
+    const orderData = {
       amount: amountInPaise,
       currency: 'INR',
       receipt: `order_${Date.now()}`,
       notes: {
         userId: userId
       }
-    });
+    };
+    console.log('Creating order with data:', orderData);
 
-    console.log('Razorpay order created successfully:', order);
+    const order = await razorpay.orders.create(orderData);
+    console.log('Order created successfully:', order);
 
     return new Response(
       JSON.stringify(order),
@@ -81,6 +77,20 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error('Error creating Razorpay order:', error);
+    // Check if it's a Razorpay API error
+    if (error.statusCode) {
+      return new Response(
+        JSON.stringify({ 
+          error: error.error.description || error.message,
+          code: error.statusCode
+        }),
+        { 
+          status: error.statusCode,
+          headers: corsHeaders,
+        }
+      );
+    }
+    // Generic error
     return new Response(
       JSON.stringify({ 
         error: error.message,
