@@ -1,96 +1,70 @@
-import { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface UseRazorpayPaymentProps {
   onSuccess?: () => void;
+  onError?: (error: Error) => void;
 }
 
-export const useRazorpayPayment = ({ onSuccess }: UseRazorpayPaymentProps) => {
+export const useRazorpayPayment = ({ onSuccess, onError }: UseRazorpayPaymentProps) => {
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
 
-  const handlePurchasePoints = async (pointsAmount: number, priceInRupees: number) => {
-    setIsLoading(true);
+  const handlePurchasePoints = async (pointsAmount: number, price: number) => {
     try {
+      setIsLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
+      if (!user) throw new Error('User not authenticated');
 
       // Create order
       const orderResponse = await supabase.functions.invoke('create-razorpay-order', {
-        body: { amount: priceInRupees, userId: user.id }
+        body: { amount: price }
       });
 
-      if (orderResponse.error) {
-        throw new Error(orderResponse.error.message);
-      }
-
+      if (orderResponse.error) throw new Error(orderResponse.error.message);
       const order = orderResponse.data;
-      console.log('Created order:', order);
 
-      // Load Razorpay script
-      const script = document.createElement('script');
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      document.body.appendChild(script);
-
-      // Initialize payment
+      // Initialize Razorpay
       const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount: order.amount,
-        currency: order.currency,
-        name: 'Points Purchase',
+        currency: "INR",
+        name: "Course Platform",
         description: `Purchase ${pointsAmount} points`,
         order_id: order.id,
         handler: async function (response: any) {
           try {
-            const verificationResponse = await supabase.functions.invoke('verify-razorpay-payment', {
+            // Verify payment
+            const verifyResponse = await supabase.functions.invoke('verify-razorpay-payment', {
               body: {
-                paymentId: response.razorpay_payment_id,
-                orderId: response.razorpay_order_id,
-                signature: response.razorpay_signature,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
                 userId: user.id,
                 pointsAmount
               }
             });
 
-            if (verificationResponse.error) {
-              throw new Error(verificationResponse.error.message);
-            }
-
-            toast({
-              title: 'Payment Successful',
-              description: `Successfully purchased ${pointsAmount} points!`,
-            });
-
+            if (verifyResponse.error) throw new Error(verifyResponse.error.message);
+            
             onSuccess?.();
           } catch (error) {
             console.error('Payment verification failed:', error);
-            toast({
-              title: 'Payment Verification Failed',
-              description: error.message,
-              variant: 'destructive',
-            });
+            onError?.(error as Error);
           }
         },
         prefill: {
-          email: user.email,
+          email: user.email
         },
         theme: {
-          color: '#7C3AED',
-        },
+          color: "#6366f1"
+        }
       };
 
       const razorpay = new (window as any).Razorpay(options);
       razorpay.open();
     } catch (error) {
       console.error('Payment initiation failed:', error);
-      toast({
-        title: 'Payment Failed',
-        description: error.message,
-        variant: 'destructive',
-      });
+      onError?.(error as Error);
     } finally {
       setIsLoading(false);
     }

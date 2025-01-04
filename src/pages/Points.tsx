@@ -14,6 +14,7 @@ const Points = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Load Razorpay script
     const script = document.createElement('script');
     script.src = 'https://checkout.razorpay.com/v1/checkout.js';
     script.async = true;
@@ -29,6 +30,11 @@ const Points = () => {
     };
 
     checkAuth();
+
+    // Cleanup
+    return () => {
+      document.body.removeChild(script);
+    };
   }, [navigate]);
 
   const fetchUserData = async (userId: string) => {
@@ -58,6 +64,11 @@ const Points = () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       fetchUserData(user.id);
+      toast({
+        title: "Success",
+        description: "Points purchased successfully!",
+        variant: "default",
+      });
     }
   };
 
