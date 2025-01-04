@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import Razorpay from "https://esm.sh/razorpay@2.9.2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,48 +8,46 @@ const corsHeaders = {
 };
 
 const createRazorpayOrder = async (keyId: string, keySecret: string, orderData: any) => {
-  const auth = btoa(`${keyId}:${keySecret}`);
-  console.log('Creating Razorpay order with data:', orderData);
+  console.log("[Edge] Creating Razorpay order with data:", orderData);
   
+  const razorpay = new Razorpay({
+    key_id: keyId,
+    key_secret: keySecret,
+  });
+
   try {
-    const response = await fetch('https://api.razorpay.com/v1/orders', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${auth}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(orderData),
+    const order = await razorpay.orders.create({
+      amount: orderData.amount,
+      currency: 'INR',
+      receipt: `order_${Date.now()}`,
+      notes: {
+        userId: orderData.userId,
+        pointsAmount: orderData.pointsAmount
+      }
     });
 
-    const responseData = await response.json();
-    console.log('Razorpay API response:', responseData);
-
-    if (!response.ok) {
-      console.error('Razorpay API error:', responseData);
-      throw new Error(responseData.error?.description || 'Failed to create Razorpay order');
-    }
-
-    console.log('Razorpay order created successfully:', responseData);
-    return responseData;
+    console.log("[Edge] Razorpay order created successfully:", order);
+    return order;
   } catch (error) {
-    console.error('Error in createRazorpayOrder:', error);
+    console.error("[Edge] Razorpay API error:", error);
     throw error;
   }
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const requestData = await req.json();
-    console.log('Received request data:', requestData);
+    console.log('[Edge] Received request data:', requestData);
 
-    const { amount, userId } = requestData;
+    const { amount, userId, pointsAmount } = requestData;
     
     if (!amount || !userId) {
-      console.error('Missing required parameters:', { amount, userId });
+      console.error('[Edge] Missing required parameters:', { amount, userId });
       return new Response(
         JSON.stringify({ 
           error: 'Amount and userId are required',
@@ -65,7 +64,7 @@ serve(async (req) => {
     const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET');
 
     if (!razorpayKeyId || !razorpayKeySecret) {
-      console.error('Razorpay credentials missing');
+      console.error('[Edge] Razorpay credentials missing');
       return new Response(
         JSON.stringify({ 
           error: 'Razorpay configuration is missing',
@@ -79,15 +78,12 @@ serve(async (req) => {
     }
 
     const amountInPaise = Math.round(amount * 100);
-    console.log('Amount in paise:', amountInPaise);
+    console.log('[Edge] Amount in paise:', amountInPaise);
 
     const orderData = {
       amount: amountInPaise,
-      currency: 'INR',
-      receipt: `order_${Date.now()}`,
-      notes: {
-        userId: userId
-      }
+      userId,
+      pointsAmount
     };
 
     const order = await createRazorpayOrder(razorpayKeyId, razorpayKeySecret, orderData);
@@ -97,7 +93,7 @@ serve(async (req) => {
       { headers: corsHeaders }
     );
   } catch (error) {
-    console.error('Error processing request:', error);
+    console.error('[Edge] Error processing request:', error);
     return new Response(
       JSON.stringify({ 
         error: error.message,

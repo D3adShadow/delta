@@ -13,10 +13,11 @@ export const useRazorpayPayment = ({ onSuccess }: UseRazorpayPaymentProps = {}) 
   const handlePurchasePoints = async (pointsAmount: number, priceInRupees: number) => {
     try {
       setIsLoading(true);
-      console.log("Starting payment process for points:", pointsAmount);
+      console.log("[Payment] Starting payment process", { pointsAmount, priceInRupees });
       
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
+        console.error("[Payment] No authenticated user found");
         toast({
           title: "Authentication required",
           description: "Please sign in to purchase points",
@@ -25,36 +26,37 @@ export const useRazorpayPayment = ({ onSuccess }: UseRazorpayPaymentProps = {}) 
         return;
       }
 
-      console.log("Creating Razorpay order for user:", user.id);
+      console.log("[Payment] Creating Razorpay order", { userId: user.id, amount: priceInRupees });
       const orderResponse = await supabase.functions.invoke('create-razorpay-order', {
         body: { 
           amount: priceInRupees,
-          userId: user.id 
+          userId: user.id,
+          pointsAmount: pointsAmount // Adding points amount to track in edge function
         },
       });
 
       if (orderResponse.error) {
-        console.error("Error creating order:", orderResponse.error);
+        console.error("[Payment] Order creation failed:", orderResponse.error);
         toast({
           title: "Payment initialization failed",
-          description: "Could not create payment order. Please try again.",
+          description: orderResponse.error.message || "Could not create payment order. Please try again.",
           variant: "destructive",
         });
         return;
       }
       
-      console.log("Razorpay order created:", orderResponse.data);
+      console.log("[Payment] Razorpay order created successfully:", orderResponse.data);
       const order = orderResponse.data;
 
       const options = {
-        key: "rzp_test_51Ix3QI9qwYH2Ez",
+        key: "rzp_test_51Ix3QI9qwYH2Ez", // This should match the key in Supabase
         amount: order.amount,
         currency: "INR",
         name: "Delta Learning",
         description: `Purchase ${pointsAmount} points`,
         order_id: order.id,
         handler: async function (response: any) {
-          console.log("Payment successful, verifying...", response);
+          console.log("[Payment] Payment successful, verifying...", response);
           try {
             const verifyResponse = await supabase.functions.invoke('verify-razorpay-payment', {
               body: {
@@ -67,16 +69,16 @@ export const useRazorpayPayment = ({ onSuccess }: UseRazorpayPaymentProps = {}) 
             });
 
             if (verifyResponse.error) {
-              console.error("Verification error:", verifyResponse.error);
+              console.error("[Payment] Verification failed:", verifyResponse.error);
               toast({
                 title: "Payment verification failed",
-                description: "There was an error verifying your payment. Please contact support.",
+                description: verifyResponse.error.message || "There was an error verifying your payment. Please contact support.",
                 variant: "destructive",
               });
               return;
             }
 
-            console.log("Payment verified successfully:", verifyResponse.data);
+            console.log("[Payment] Payment verified successfully:", verifyResponse.data);
             toast({
               title: "Points purchased successfully!",
               description: `${pointsAmount} points have been added to your account`,
@@ -86,7 +88,7 @@ export const useRazorpayPayment = ({ onSuccess }: UseRazorpayPaymentProps = {}) 
               onSuccess();
             }
           } catch (error) {
-            console.error("Error in payment verification:", error);
+            console.error("[Payment] Error in payment verification:", error);
             toast({
               title: "Payment verification failed",
               description: "There was an error processing your payment. Please try again.",
@@ -102,7 +104,8 @@ export const useRazorpayPayment = ({ onSuccess }: UseRazorpayPaymentProps = {}) 
         },
         modal: {
           ondismiss: function() {
-            console.log("Payment modal dismissed");
+            console.log("[Payment] Payment modal dismissed by user");
+            setIsLoading(false);
             toast({
               title: "Payment cancelled",
               description: "You cancelled the payment process. No points were added.",
@@ -116,7 +119,7 @@ export const useRazorpayPayment = ({ onSuccess }: UseRazorpayPaymentProps = {}) 
       const razorpay = new window.Razorpay(options);
       razorpay.open();
     } catch (error) {
-      console.error("Error initiating payment:", error);
+      console.error("[Payment] Error initiating payment:", error);
       toast({
         title: "Payment failed",
         description: "There was an error initiating the payment. Please try again.",
