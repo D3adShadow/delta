@@ -96,12 +96,13 @@ const Login = () => {
             }}
             showLinks={true}
             view="sign_up"
-            additionalData={{
-              full_name: {
-                type: "text",
-                required: true,
-                label: "Full Name",
-                placeholder: "Enter your full name"
+            options={{
+              signUpFields: {
+                full_name: {
+                  required: true,
+                  label: "Full Name",
+                  placeholder: "Enter your full name"
+                }
               }
             }}
           />
