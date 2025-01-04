@@ -20,15 +20,16 @@ const createRazorpayOrder = async (keyId: string, keySecret: string, orderData: 
       body: JSON.stringify(orderData),
     });
 
+    const responseData = await response.json();
+    console.log('Razorpay API response:', responseData);
+
     if (!response.ok) {
-      const error = await response.json();
-      console.error('Razorpay API error:', error);
-      throw new Error(error.error.description || 'Failed to create Razorpay order');
+      console.error('Razorpay API error:', responseData);
+      throw new Error(responseData.error?.description || 'Failed to create Razorpay order');
     }
 
-    const data = await response.json();
-    console.log('Razorpay order created successfully:', data);
-    return data;
+    console.log('Razorpay order created successfully:', responseData);
+    return responseData;
   } catch (error) {
     console.error('Error in createRazorpayOrder:', error);
     throw error;
