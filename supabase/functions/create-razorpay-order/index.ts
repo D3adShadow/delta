@@ -14,10 +14,10 @@ serve(async (req) => {
 
   try {
     const { amount } = await req.json();
-    console.log("Creating order for amount:", amount);
+    console.log("Received request with amount:", amount);
 
     if (!amount || typeof amount !== 'number' || amount <= 0) {
-      console.error("Invalid amount provided:", amount);
+      console.error("Invalid amount:", amount);
       return new Response(
         JSON.stringify({ error: "Invalid amount provided" }),
         { 
@@ -27,41 +27,50 @@ serve(async (req) => {
       );
     }
 
+    const key_id = Deno.env.get('RAZORPAY_KEY_ID');
+    const key_secret = Deno.env.get('RAZORPAY_KEY_SECRET');
+
+    if (!key_id || !key_secret) {
+      console.error("Missing Razorpay credentials");
+      return new Response(
+        JSON.stringify({ error: "Server configuration error" }),
+        { 
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    console.log("Initializing Razorpay with credentials");
     const razorpay = new Razorpay({
-      key_id: Deno.env.get('RAZORPAY_KEY_ID') || '',
-      key_secret: Deno.env.get('RAZORPAY_KEY_SECRET') || '',
+      key_id: key_id,
+      key_secret: key_secret,
     });
 
-    console.log("Initializing Razorpay order creation...");
+    console.log("Creating Razorpay order for amount:", amount);
     const order = await razorpay.orders.create({
       amount: amount * 100, // Convert to paise
       currency: 'INR',
     });
 
     console.log("Order created successfully:", order);
-
     return new Response(
       JSON.stringify(order),
       { 
-        headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json' 
-        } 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
+
   } catch (error) {
     console.error("Error creating order:", error);
     return new Response(
       JSON.stringify({ 
-        error: error.message || "Failed to create order",
-        details: error
-      }), 
+        error: "Failed to create order",
+        details: error.message
+      }),
       { 
-        status: 400,
-        headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json' 
-        } 
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
   }

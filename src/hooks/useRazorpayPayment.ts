@@ -24,7 +24,7 @@ export const useRazorpayPayment = ({ onSuccess, onError }: UseRazorpayPaymentPro
         return;
       }
 
-      console.log("Creating Razorpay order...");
+      console.log("Creating Razorpay order with price:", price);
       const orderResponse = await supabase.functions.invoke('create-razorpay-order', {
         body: { amount: price }
       });
@@ -34,8 +34,18 @@ export const useRazorpayPayment = ({ onSuccess, onError }: UseRazorpayPaymentPro
         throw new Error(orderResponse.error.message || "Failed to create order");
       }
 
+      if (!orderResponse.data) {
+        console.error("No order data received");
+        throw new Error("No order data received from server");
+      }
+
       const order = orderResponse.data;
       console.log("Order created:", order);
+
+      if (!order.id || !order.amount) {
+        console.error("Invalid order data:", order);
+        throw new Error("Invalid order data received");
+      }
 
       // Initialize Razorpay
       const options = {
