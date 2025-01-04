@@ -4,29 +4,75 @@ import { Menu, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import DesktopMenu from "./navigation/DesktopMenu";
 import MobileMenu from "./navigation/MobileMenu";
+import { useToast } from "@/hooks/use-toast";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [session, setSession] = useState<any>(null);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
+    // Initial session check
+    const checkSession = async () => {
+      try {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        console.log("Current session:", currentSession);
+        setSession(currentSession);
+        
+        if (!currentSession) {
+          console.log("No active session found");
+          navigate("/login");
+        }
+      } catch (error) {
+        console.error("Session check error:", error);
+        toast({
+          title: "Session Error",
+          description: "Please sign in again",
+          variant: "destructive",
+        });
+        navigate("/login");
+      }
+    };
+
+    checkSession();
+
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+      console.log("Auth state changed:", event, currentSession);
+      setSession(currentSession);
+
+      if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+        navigate("/login");
+        toast({
+          title: "Signed out",
+          description: "You have been signed out successfully",
+        });
+      } else if (event === 'SIGNED_IN') {
+        toast({
+          title: "Signed in",
+          description: "Welcome back!",
+        });
+      }
     });
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate, toast]);
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/");
+    try {
+      await supabase.auth.signOut();
+      navigate("/login");
+    } catch (error) {
+      console.error("Sign out error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const navItems = [
@@ -51,7 +97,6 @@ const Navigation = () => {
             onSignOut={handleSignOut}
           />
 
-          {/* Mobile Navigation Button */}
           <div className="flex items-center md:hidden">
             <button
               onClick={() => setIsOpen(!isOpen)}
