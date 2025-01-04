@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Courses from "./pages/Courses";
 import Profile from "./pages/Profile";
+import Points from "./pages/Points";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,7 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/courses" element={<Courses />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/points" element={<Points />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>

@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/Navigation";
+import TransactionHistory from "@/components/points/TransactionHistory";
+import { Card } from "@/components/ui/card";
 
 const POINTS_PACKAGES = [
   { amount: 100, price: "$10" },
@@ -86,35 +88,52 @@ const Points = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gray-50">
       <Navigation />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-24">
-        {/* Header Section */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">{userName}'s Points</h1>
-          <p className="text-lg text-gray-600 mt-2">
-            Current Balance: <span className="font-semibold text-primary-600">{userPoints || 0}</span> points
-          </p>
+        {/* Points Overview Card */}
+        <Card className="bg-white p-6 mb-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">{userName}'s Wallet</h1>
+              <p className="text-lg text-gray-600 mt-2">
+                Available Balance:{" "}
+                <span className="font-semibold text-primary-600">
+                  {userPoints || 0}
+                </span>{" "}
+                points
+              </p>
+            </div>
+          </div>
+        </Card>
+
+        {/* Points Packages */}
+        <div className="mb-12">
+          <h2 className="text-xl font-semibold text-gray-900 mb-6">Purchase Points</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {POINTS_PACKAGES.map((pkg) => (
+              <Card
+                key={pkg.amount}
+                className="p-6 text-center hover:shadow-lg transition-shadow duration-200"
+              >
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                  {pkg.amount} Points
+                </h3>
+                <p className="text-lg text-gray-600 mb-4">{pkg.price}</p>
+                <Button
+                  onClick={() => handlePurchasePoints(pkg.amount)}
+                  className="w-full"
+                  variant="default"
+                >
+                  Purchase
+                </Button>
+              </Card>
+            ))}
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
-          {POINTS_PACKAGES.map((pkg) => (
-            <div
-              key={pkg.amount}
-              className="border rounded-lg p-6 text-center bg-white shadow-sm hover:shadow-md transition-shadow duration-200"
-            >
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">{pkg.amount} Points</h3>
-              <p className="text-lg text-gray-600 mb-4">{pkg.price}</p>
-              <Button
-                onClick={() => handlePurchasePoints(pkg.amount)}
-                className="w-full"
-                variant="default"
-              >
-                Purchase
-              </Button>
-            </div>
-          ))}
-        </div>
+        {/* Transaction History */}
+        <TransactionHistory />
       </div>
     </div>
   );
