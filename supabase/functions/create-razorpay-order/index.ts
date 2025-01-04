@@ -30,7 +30,7 @@ const createRazorpayOrder = async (keyId: string, keySecret: string, orderData: 
     return order;
   } catch (error) {
     console.error("[Edge] Razorpay API error:", error);
-    throw error;
+    throw new Error(error.error?.description || error.message || 'Failed to create Razorpay order');
   }
 };
 
@@ -76,6 +76,8 @@ serve(async (req) => {
         }
       );
     }
+
+    console.log('[Edge] Razorpay credentials found, proceeding with order creation');
 
     const amountInPaise = Math.round(amount * 100);
     console.log('[Edge] Amount in paise:', amountInPaise);
