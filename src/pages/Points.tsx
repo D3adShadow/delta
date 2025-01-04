@@ -92,7 +92,7 @@ const Points = () => {
       const order = orderResponse.data;
 
       const options = {
-        key: "rzp_test_51Ix3QI9qwYH2Ez",
+        key: "rzp_test_51Ix3QI9qwYH2Ez", // Updated Razorpay test key
         amount: order.amount,
         currency: "INR",
         name: "Delta Learning",
