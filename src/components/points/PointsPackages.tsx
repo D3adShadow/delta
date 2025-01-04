@@ -1,7 +1,6 @@
 import { Card } from "@/components/ui/card";
 import PointsPackage from "./PointsPackage";
-import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { useRazorpayPayment } from "@/hooks/useRazorpayPayment";
 
 const POINTS_PACKAGES = [
   { amount: 100, price: 100 },
@@ -14,22 +13,9 @@ interface PointsPackagesProps {
 }
 
 const PointsPackages = ({ onPurchaseSuccess }: PointsPackagesProps) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
-
-  const handlePurchasePoints = async (pointsAmount: number, priceInRupees: number) => {
-    setIsLoading(true);
-    try {
-      // Temporary placeholder for payment integration
-      toast({
-        title: "Payment Integration Required",
-        description: "Payment gateway integration is currently unavailable.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { handlePurchasePoints, isLoading } = useRazorpayPayment({
+    onSuccess: onPurchaseSuccess,
+  });
 
   return (
     <div className="mb-12">
