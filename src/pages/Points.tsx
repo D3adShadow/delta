@@ -55,6 +55,11 @@ const Points = () => {
 
     if (error) {
       console.error("Error fetching points:", error);
+      toast({
+        title: "Error",
+        description: "Could not fetch your points balance",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -76,23 +81,31 @@ const Points = () => {
         return;
       }
 
+      console.log("Creating Razorpay order for user:", user.id);
+      
       // Create Razorpay order
       const orderResponse = await supabase.functions.invoke('create-razorpay-order', {
         body: { amount: priceInRupees, userId: user.id },
       });
 
-      if (orderResponse.error) throw new Error(orderResponse.error.message);
+      if (orderResponse.error) {
+        console.error("Error creating order:", orderResponse.error);
+        throw new Error(orderResponse.error.message);
+      }
+      
+      console.log("Razorpay order created:", orderResponse.data);
       const order = orderResponse.data;
 
       // Initialize Razorpay payment
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        key: "rzp_test_51Ix3QI9qwYH2Ez", // Replace with your test key
         amount: order.amount,
         currency: "INR",
         name: "Delta Learning",
         description: `Purchase ${pointsAmount} points`,
         order_id: order.id,
         handler: async function (response: any) {
+          console.log("Payment successful, verifying...", response);
           try {
             // Verify payment and update points
             const verifyResponse = await supabase.functions.invoke('verify-razorpay-payment', {
@@ -105,8 +118,12 @@ const Points = () => {
               },
             });
 
-            if (verifyResponse.error) throw new Error(verifyResponse.error.message);
+            if (verifyResponse.error) {
+              console.error("Verification error:", verifyResponse.error);
+              throw new Error(verifyResponse.error.message);
+            }
 
+            console.log("Payment verified successfully:", verifyResponse.data);
             setUserPoints(verifyResponse.data.points);
             toast({
               title: "Points purchased successfully!",
