@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 export const LoginForm = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [isLogin, setIsLogin] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -73,22 +74,54 @@ export const LoginForm = () => {
     setIsLoading(false);
   };
 
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    if (data.user) {
+      toast({
+        title: "Welcome back!",
+        description: "You have successfully signed in.",
+      });
+      navigate("/courses");
+    }
+
+    setIsLoading(false);
+  };
+
   return (
-    <form onSubmit={handleSignUp} className="space-y-6">
+    <form onSubmit={isLogin ? handleSignIn : handleSignUp} className="space-y-6">
       <div className="space-y-4">
-        <div className="space-y-2">
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-            Name
-          </label>
-          <Input
-            id="name"
-            type="text"
-            placeholder="Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
-        </div>
+        {!isLogin && (
+          <div className="space-y-2">
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+              Name
+            </label>
+            <Input
+              id="name"
+              type="text"
+              placeholder="Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required={!isLogin}
+            />
+          </div>
+        )}
 
         <div className="space-y-2">
           <label htmlFor="email" className="block text-sm font-medium text-gray-700">
@@ -118,33 +151,54 @@ export const LoginForm = () => {
           />
         </div>
 
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="terms"
-            checked={acceptTerms}
-            onCheckedChange={(checked) => setAcceptTerms(checked as boolean)}
-          />
-          <label
-            htmlFor="terms"
-            className="text-sm text-gray-600"
-          >
-            Accept our{" "}
-            <a href="/terms" className="text-primary hover:underline">
-              Terms and Conditions
-            </a>
-          </label>
-        </div>
+        {!isLogin && (
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="terms"
+              checked={acceptTerms}
+              onCheckedChange={(checked) => setAcceptTerms(checked as boolean)}
+            />
+            <label
+              htmlFor="terms"
+              className="text-sm text-gray-600"
+            >
+              Accept our{" "}
+              <a href="/terms" className="text-primary hover:underline">
+                Terms and Conditions
+              </a>
+            </label>
+          </div>
+        )}
       </div>
 
-      <Button type="submit" className="w-full bg-blue-500 hover:bg-blue-600" disabled={isLoading}>
-        {isLoading ? "Creating account..." : "Create Free Account"}
+      <Button type="submit" className="w-full bg-primary hover:bg-primary-600" disabled={isLoading}>
+        {isLoading ? (isLogin ? "Signing in..." : "Creating account...") : (isLogin ? "Sign In" : "Create Free Account")}
       </Button>
 
       <div className="text-center text-sm text-gray-500">
-        Already have an account?{" "}
-        <a href="/login" className="text-primary hover:underline">
-          Log in here
-        </a>
+        {isLogin ? (
+          <>
+            Don't have an account?{" "}
+            <button
+              type="button"
+              onClick={() => setIsLogin(false)}
+              className="text-primary hover:underline"
+            >
+              Sign up here
+            </button>
+          </>
+        ) : (
+          <>
+            Already have an account?{" "}
+            <button
+              type="button"
+              onClick={() => setIsLogin(true)}
+              className="text-primary hover:underline"
+            >
+              Sign in here
+            </button>
+          </>
+        )}
       </div>
     </form>
   );
