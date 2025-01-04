@@ -19,7 +19,21 @@ const CourseTest = ({ courseId, onComplete }: CourseTestProps) => {
   const { data: questions, isLoading } = useQuery({
     queryKey: ["test-questions", courseId],
     queryFn: async () => {
-      console.log("Fetching test questions for course:", courseId);
+      console.log("Starting to fetch test questions for course:", courseId);
+      
+      const { data: courseData, error: courseError } = await supabase
+        .from("courses")
+        .select("title")
+        .eq("id", courseId)
+        .single();
+
+      if (courseError) {
+        console.error("Error fetching course:", courseError);
+        throw courseError;
+      }
+
+      console.log("Found course:", courseData);
+
       const { data, error } = await supabase
         .from("test_questions")
         .select("*")
@@ -31,12 +45,13 @@ const CourseTest = ({ courseId, onComplete }: CourseTestProps) => {
         throw error;
       }
 
-      console.log("Fetched test questions:", data);
+      console.log(`Fetched ${data.length} test questions for course:`, courseId);
       return data;
     },
   });
 
   const handleAnswerSelect = (answerIndex: number) => {
+    console.log("Selected answer:", answerIndex, "for question:", currentQuestionIndex);
     const newAnswers = [...selectedAnswers];
     newAnswers[currentQuestionIndex] = answerIndex;
     setSelectedAnswers(newAnswers);
@@ -45,23 +60,27 @@ const CourseTest = ({ courseId, onComplete }: CourseTestProps) => {
   const handleNext = () => {
     if (questions && currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
+      console.log("Moving to next question:", currentQuestionIndex + 1);
     }
   };
 
   const handlePrevious = () => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(currentQuestionIndex - 1);
+      console.log("Moving to previous question:", currentQuestionIndex - 1);
     }
   };
 
   const calculateScore = () => {
     if (!questions) return 0;
-    return questions.reduce((total, question, index) => {
+    const score = questions.reduce((total, question, index) => {
       if (selectedAnswers[index] === question.correct_answer) {
         return total + question.marks;
       }
       return total;
     }, 0);
+    console.log("Calculated score:", score);
+    return score;
   };
 
   const handleSubmit = async () => {
@@ -86,7 +105,10 @@ const CourseTest = ({ courseId, onComplete }: CourseTestProps) => {
         max_score: maxScore,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error submitting test result:", error);
+        throw error;
+      }
 
       toast({
         title: "Test Completed!",
