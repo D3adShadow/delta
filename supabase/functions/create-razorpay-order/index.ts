@@ -47,11 +47,16 @@ serve(async (req) => {
       key_secret,
     });
 
-    console.log("Creating Razorpay order for amount:", amount);
+    const receipt = `order_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    console.log("Creating Razorpay order for amount:", amount, "with receipt:", receipt);
+    
     const orderData = {
       amount: amount * 100, // Convert to paise
       currency: 'INR',
-      receipt: `order_${Date.now()}`,
+      receipt,
+      notes: {
+        description: `Points purchase for amount ${amount}`
+      },
       payment_capture: 1
     };
     
@@ -69,7 +74,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: "Failed to create order",
-        details: error.message || "Unknown error occurred"
+        details: error.message || "Unknown error occurred",
+        stack: error.stack
       }),
       { 
         status: 500,

@@ -57,7 +57,7 @@ export const useRazorpayPayment = ({ onSuccess, onError }: UseRazorpayPaymentPro
         order_id: order.id,
         handler: async function (response: any) {
           try {
-            console.log("Payment successful, verifying...");
+            console.log("Payment successful, verifying...", response);
             const verifyResponse = await supabase.functions.invoke('verify-razorpay-payment', {
               body: {
                 razorpay_order_id: response.razorpay_order_id,
