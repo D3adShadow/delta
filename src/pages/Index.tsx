@@ -4,7 +4,7 @@ import CourseCard from "@/components/CourseCard";
 
 const featuredCourses = [
   {
-    id: "1",
+    id: "123e4567-e89b-12d3-a456-426614174000",
     title: "Introduction to Machine Learning",
     description:
       "Learn the fundamentals of machine learning and AI with hands-on projects and real-world applications.",
@@ -15,7 +15,7 @@ const featuredCourses = [
     points: 500,
   },
   {
-    id: "2",
+    id: "223e4567-e89b-12d3-a456-426614174001",
     title: "Web Development Masterclass",
     description:
       "Master modern web development with React, Node.js, and cloud technologies.",
@@ -26,7 +26,7 @@ const featuredCourses = [
     points: 750,
   },
   {
-    id: "3",
+    id: "323e4567-e89b-12d3-a456-426614174002",
     title: "Digital Marketing Essentials",
     description:
       "Learn proven strategies for growing your online presence and reaching your target audience.",
