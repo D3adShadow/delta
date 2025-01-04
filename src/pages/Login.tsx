@@ -15,18 +15,33 @@ const Login = () => {
       
       if (event === "SIGNED_IN") {
         if (session?.user) {
-          console.log("Creating user record with metadata:", session.user.user_metadata);
-          const { error } = await supabase
+          // First check if user record exists
+          const { data: existingUser } = await supabase
             .from('users')
-            .insert([
-              {
-                id: session.user.id,
-                full_name: session.user.user_metadata.full_name || 'Anonymous User',
-              }
-            ]);
+            .select('id')
+            .eq('id', session.user.id)
+            .single();
 
-          if (error) {
-            console.error("Error creating user record:", error);
+          if (!existingUser) {
+            console.log("Creating new user record with metadata:", session.user.user_metadata);
+            const { error } = await supabase
+              .from('users')
+              .insert([
+                {
+                  id: session.user.id,
+                  full_name: session.user.user_metadata.full_name || 'Anonymous User',
+                }
+              ]);
+
+            if (error) {
+              console.error("Error creating user record:", error);
+              toast({
+                title: "Error",
+                description: "There was a problem setting up your account. Please try again.",
+                variant: "destructive",
+              });
+              return;
+            }
           }
         }
 
