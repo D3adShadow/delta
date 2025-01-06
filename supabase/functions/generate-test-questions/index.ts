@@ -8,93 +8,86 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const { courseId, courseTitle, courseDescription } = await req.json();
-    console.log('Generating questions for course:', { courseId, courseTitle });
+    console.log('Generating questions for course:', courseId, courseTitle);
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    const perplexityKey = Deno.env.get('PERPLEXITY_API_KEY');
-
-    if (!supabaseUrl || !supabaseKey || !perplexityKey) {
-      console.error('Missing required environment variables');
-      throw new Error('Server configuration error');
-    }
-
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const prompt = `Generate a multiple choice test for the course "${courseTitle}" with description "${courseDescription}".
+    // Prepare prompt for Gemini
+    const prompt = `You are a professional educator creating a test for a course titled "${courseTitle}" with the following description: "${courseDescription}".
 
-Create 5 multiple choice questions that:
-1. Test understanding of key concepts
-2. Have exactly 4 options each
-3. Have one correct answer
-4. Are worth 5 points each
+Please generate 20 multiple choice questions that:
+1. Are specifically focused on ${courseTitle}
+2. Test understanding of key concepts from the course description
+3. Have exactly 4 options (labeled A, B, C, D)
+4. Have one correct answer
+5. Are worth 5 points each
+6. Are challenging but fair
 
-Format each question as a JSON object with these fields:
+Format each question as a JSON object with these exact fields:
 {
-  "question": "Question text here",
+  "question": "The question text here",
   "options": ["Option A", "Option B", "Option C", "Option D"],
-  "correct_answer": 0
+  "correct_answer": 0 // Index of correct answer (0-3)
 }
 
-Return an array of exactly 5 such question objects. The response must be a valid JSON array.`;
+Return an array of 20 such question objects.`;
 
-    console.log('Sending request to Perplexity API');
-    
-    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+    console.log('Sending prompt to Gemini:', prompt);
+
+    // Call Gemini API
+    const response = await fetch('https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${perplexityKey}`,
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${Deno.env.get('GEMINI_API_KEY')}`,
       },
       body: JSON.stringify({
-        model: 'llama-3.1-sonar-small-128k-online', // Using the smallest model for cost efficiency
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a helpful assistant that generates multiple choice questions in JSON format. Be precise and concise.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        temperature: 0.2,
-        max_tokens: 1000,
-        top_p: 0.9,
-        frequency_penalty: 1,
-        presence_penalty: 0
-      }),
+        contents: [{
+          parts: [{
+            text: prompt
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.7,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 2048,
+        }
+      })
     });
 
     if (!response.ok) {
-      console.error('Perplexity API error status:', response.status);
-      const errorText = await response.text();
-      console.error('Perplexity API error response:', errorText);
-      throw new Error(`Perplexity API error: ${response.status}`);
+      console.error('Gemini API error:', await response.text());
+      throw new Error('Failed to get response from Gemini API');
     }
 
     const data = await response.json();
-    console.log('Received response from Perplexity');
+    console.log('Received response from Gemini');
 
-    if (!data.choices?.[0]?.message?.content) {
-      console.error('Invalid Perplexity response structure:', JSON.stringify(data));
-      throw new Error('Invalid response structure from Perplexity');
+    if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+      console.error('Invalid Gemini response structure:', JSON.stringify(data));
+      throw new Error('Invalid response structure from Gemini');
     }
 
-    const responseText = data.choices[0].message.content;
-    console.log('Raw Perplexity response:', responseText);
+    // Parse the response and extract questions
+    const responseText = data.candidates[0].content.parts[0].text;
+    console.log('Raw Gemini response:', responseText);
 
-    // Extract JSON array from response
+    // Look for JSON array in the response
     const jsonMatch = responseText.match(/\[[\s\S]*\]/);
     if (!jsonMatch) {
-      console.error('Could not find JSON array in response');
-      throw new Error('Invalid response format from Perplexity');
+      console.error('Could not find JSON array in response:', responseText);
+      throw new Error('Could not find questions in Gemini response');
     }
 
     let questions;
@@ -103,14 +96,15 @@ Return an array of exactly 5 such question objects. The response must be a valid
       console.log(`Successfully parsed ${questions.length} questions`);
     } catch (error) {
       console.error('JSON parse error:', error);
-      throw new Error('Failed to parse questions from Perplexity response');
+      throw new Error('Failed to parse questions from Gemini response');
     }
 
-    // Validate questions
+    // Validate questions format
     if (!Array.isArray(questions) || questions.length === 0) {
       throw new Error('Invalid questions format: not an array or empty array');
     }
 
+    // Validate each question
     questions.forEach((q, index) => {
       if (!q.question || !Array.isArray(q.options) || q.options.length !== 4 || 
           typeof q.correct_answer !== 'number' || q.correct_answer < 0 || q.correct_answer > 3) {
@@ -119,18 +113,7 @@ Return an array of exactly 5 such question objects. The response must be a valid
       }
     });
 
-    // Delete existing questions for this course
-    const { error: deleteError } = await supabase
-      .from('test_questions')
-      .delete()
-      .eq('course_id', courseId);
-
-    if (deleteError) {
-      console.error('Error deleting existing questions:', deleteError);
-      throw deleteError;
-    }
-
-    // Insert new questions
+    // Insert questions into the database
     const { error: insertError } = await supabase
       .from('test_questions')
       .insert(

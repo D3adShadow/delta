@@ -4,8 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "../ui/button";
 import { useToast } from "../ui/use-toast";
 import { Loader2 } from "lucide-react";
-import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
-import { Label } from "../ui/label";
 
 interface CourseTestProps {
   courseId: string;
@@ -23,6 +21,21 @@ const CourseTest = ({ courseId, onComplete }: CourseTestProps) => {
     queryFn: async () => {
       console.log("Starting to fetch test questions for course:", courseId);
       
+      // First verify the course exists
+      const { data: courseData, error: courseError } = await supabase
+        .from("courses")
+        .select("title")
+        .eq("id", courseId)
+        .single();
+
+      if (courseError) {
+        console.error("Error fetching course:", courseError);
+        throw new Error(`Course not found: ${courseError.message}`);
+      }
+
+      console.log("Found course:", courseData);
+
+      // Then fetch the test questions
       const { data: questionsData, error: questionsError } = await supabase
         .from("test_questions")
         .select("*")
@@ -44,10 +57,10 @@ const CourseTest = ({ courseId, onComplete }: CourseTestProps) => {
     },
   });
 
-  const handleAnswerSelect = (value: string) => {
-    console.log("Selected answer:", value, "for question:", currentQuestionIndex);
+  const handleAnswerSelect = (answerIndex: number) => {
+    console.log("Selected answer:", answerIndex, "for question:", currentQuestionIndex);
     const newAnswers = [...selectedAnswers];
-    newAnswers[currentQuestionIndex] = parseInt(value);
+    newAnswers[currentQuestionIndex] = answerIndex;
     setSelectedAnswers(newAnswers);
   };
 
@@ -112,7 +125,7 @@ const CourseTest = ({ courseId, onComplete }: CourseTestProps) => {
 
       toast({
         title: "Test Completed!",
-        description: `You scored ${score} out of ${maxScore} points (${Math.round((score/maxScore) * 100)}%).`,
+        description: `You scored ${score} out of ${maxScore} points.`,
       });
 
       onComplete?.();
@@ -175,20 +188,22 @@ const CourseTest = ({ courseId, onComplete }: CourseTestProps) => {
       <div className="space-y-4">
         <p className="text-lg">{currentQuestion.question}</p>
 
-        <RadioGroup
-          value={selectedAnswers[currentQuestionIndex]?.toString()}
-          onValueChange={handleAnswerSelect}
-          className="space-y-3"
-        >
+        <div className="space-y-3">
           {options.map((option, index) => (
-            <div key={index} className="flex items-center space-x-2">
-              <RadioGroupItem value={index.toString()} id={`option-${index}`} />
-              <Label htmlFor={`option-${index}`} className="text-base">
+            <div
+              key={index}
+              className="flex items-center space-x-3"
+            >
+              <Button
+                variant={selectedAnswers[currentQuestionIndex] === index ? "default" : "outline"}
+                className="w-full justify-start"
+                onClick={() => handleAnswerSelect(index)}
+              >
                 {option}
-              </Label>
+              </Button>
             </div>
           ))}
-        </RadioGroup>
+        </div>
       </div>
 
       <div className="flex justify-between pt-4">
