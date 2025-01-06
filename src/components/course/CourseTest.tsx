@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "../ui/button";
-import { useToast } from "../ui/use-toast";
 import { Loader2 } from "lucide-react";
+import { useTestQuestions } from "./hooks/useTestQuestions";
+import { useTestSubmission } from "./hooks/useTestSubmission";
 
 interface CourseTestProps {
   courseId: string;
@@ -13,49 +12,9 @@ interface CourseTestProps {
 const CourseTest = ({ courseId, onComplete }: CourseTestProps) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
-
-  const { data: questions, isLoading, error } = useQuery({
-    queryKey: ["test-questions", courseId],
-    queryFn: async () => {
-      console.log("Starting to fetch test questions for course:", courseId);
-      
-      // First verify the course exists
-      const { data: courseData, error: courseError } = await supabase
-        .from("courses")
-        .select("title")
-        .eq("id", courseId)
-        .single();
-
-      if (courseError) {
-        console.error("Error fetching course:", courseError);
-        throw new Error(`Course not found: ${courseError.message}`);
-      }
-
-      console.log("Found course:", courseData);
-
-      // Then fetch the test questions
-      const { data: questionsData, error: questionsError } = await supabase
-        .from("test_questions")
-        .select("*")
-        .eq("course_id", courseId)
-        .order("created_at");
-
-      if (questionsError) {
-        console.error("Error fetching test questions:", questionsError);
-        throw new Error(`Failed to fetch test questions: ${questionsError.message}`);
-      }
-
-      if (!questionsData || questionsData.length === 0) {
-        console.log("No test questions found for course:", courseId);
-        return [];
-      }
-
-      console.log(`Fetched ${questionsData.length} test questions:`, questionsData);
-      return questionsData;
-    },
-  });
+  
+  const { data: questions, isLoading, error } = useTestQuestions(courseId);
+  const { handleSubmit, isSubmitting } = useTestSubmission(courseId, onComplete);
 
   const handleAnswerSelect = (answerIndex: number) => {
     console.log("Selected answer:", answerIndex, "for question:", currentQuestionIndex);
@@ -75,69 +34,6 @@ const CourseTest = ({ courseId, onComplete }: CourseTestProps) => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(currentQuestionIndex - 1);
       console.log("Moving to previous question:", currentQuestionIndex - 1);
-    }
-  };
-
-  const calculateScore = () => {
-    if (!questions) return 0;
-    const score = questions.reduce((total, question, index) => {
-      if (selectedAnswers[index] === question.correct_answer) {
-        return total + question.marks;
-      }
-      return total;
-    }, 0);
-    console.log("Calculated score:", score);
-    return score;
-  };
-
-  const handleSubmit = async () => {
-    if (!questions || selectedAnswers.length !== questions.length) {
-      toast({
-        title: "Please answer all questions",
-        description: "You must answer all questions before submitting the test.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-    const score = calculateScore();
-    const maxScore = questions.reduce((total, q) => total + q.marks, 0);
-
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error("User not authenticated");
-      }
-
-      console.log("Submitting test result:", { courseId, score, maxScore, userId: user.id });
-      const { error } = await supabase.from("test_results").insert({
-        course_id: courseId,
-        user_id: user.id,
-        score,
-        max_score: maxScore,
-      });
-
-      if (error) {
-        console.error("Error submitting test result:", error);
-        throw error;
-      }
-
-      toast({
-        title: "Test Completed!",
-        description: `You scored ${score} out of ${maxScore} points.`,
-      });
-
-      onComplete?.();
-    } catch (error) {
-      console.error("Error submitting test result:", error);
-      toast({
-        title: "Error",
-        description: "Failed to submit test results. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -217,7 +113,7 @@ const CourseTest = ({ courseId, onComplete }: CourseTestProps) => {
 
         {currentQuestionIndex === questions.length - 1 ? (
           <Button
-            onClick={handleSubmit}
+            onClick={() => handleSubmit(questions, selectedAnswers)}
             disabled={isSubmitting}
           >
             {isSubmitting ? "Submitting..." : "Submit Test"}
