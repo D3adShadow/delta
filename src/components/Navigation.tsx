@@ -49,7 +49,7 @@ const Navigation = () => {
           description: "You have been signed out successfully",
         });
       } else if (event === 'SIGNED_IN') {
-        navigate("/");
+        navigate("/"); // Changed from /courses to /
         toast({
           title: "Signed in",
           description: "Welcome back!",
@@ -83,12 +83,12 @@ const Navigation = () => {
   ];
 
   return (
-    <nav className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-lg z-50 border-b border-gray-100">
+    <nav className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-lg z-50 border-b border-gray-100 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           <div className="flex items-center">
             <Link to="/" className="flex items-center">
-              <span className="text-2xl font-bold text-primary-500 tracking-tight">Delta</span>
+              <span className="text-2xl font-bold text-primary-500">Delta</span>
             </Link>
           </div>
 
@@ -101,11 +101,9 @@ const Navigation = () => {
           <div className="flex items-center md:hidden">
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-600 hover:text-primary-500 hover:bg-gray-100 transition-colors duration-200"
-              aria-expanded="false"
+              className="text-gray-600 hover:text-primary-500 transition-colors duration-200"
             >
-              <span className="sr-only">Open main menu</span>
-              {isOpen ? <X className="block h-6 w-6" /> : <Menu className="block h-6 w-6" />}
+              {isOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>
         </div>
