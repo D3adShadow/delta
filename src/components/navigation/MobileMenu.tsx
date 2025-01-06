@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { X } from "lucide-react";
+import NavigationLinks from "./NavigationLinks";
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -14,56 +14,48 @@ const MobileMenu = ({ isOpen, session, navItems, onSignOut, onClose }: MobileMen
 
   return (
     <div className="md:hidden">
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40" onClick={onClose} />
-      <div className="fixed inset-y-0 right-0 w-full max-w-sm bg-[#1d1d1f] shadow-lg z-50">
+      <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40" onClick={onClose} />
+      <div className="fixed inset-y-0 right-0 w-full max-w-sm bg-white shadow-lg z-50 animate-in slide-in-from-right">
         <div className="flex flex-col h-full">
-          {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700">
-            <Link to="/" className="flex items-center" onClick={onClose}>
-              <span className="text-2xl font-bold text-white tracking-tight">Delta</span>
-            </Link>
-            <button
-              onClick={onClose}
-              className="p-2 rounded-lg text-gray-400 hover:text-white transition-colors"
-              aria-label="Close menu"
-            >
-              <X className="h-6 w-6" />
-            </button>
-          </div>
-
-          {/* Menu Content */}
-          <div className="flex-1 overflow-y-auto py-8 px-6">
-            <nav className="space-y-6">
-              {session && navItems.map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.path}
-                  className="block text-lg font-medium text-white hover:text-gray-300 transition-colors"
-                  onClick={onClose}
-                >
-                  {item.name}
-                </Link>
-              ))}
-              {session ? (
-                <button
-                  onClick={() => {
-                    onSignOut();
-                    onClose();
-                  }}
-                  className="block w-full text-left text-lg font-medium text-white hover:text-gray-300 transition-colors"
-                >
-                  Sign Out
-                </button>
-              ) : (
-                <Link
-                  to="/login"
-                  className="block text-lg font-medium text-white hover:text-gray-300 transition-colors"
-                  onClick={onClose}
-                >
-                  Sign In
-                </Link>
-              )}
-            </nav>
+          <div className="pt-5 pb-6 px-4 space-y-6">
+            <div className="flex items-center justify-between">
+              <Link to="/" className="text-2xl font-bold text-primary-500" onClick={onClose}>
+                Delta
+              </Link>
+            </div>
+            <div className="mt-6">
+              <nav className="grid gap-y-4">
+                {session && navItems.map((item) => (
+                  <Link
+                    key={item.name}
+                    to={item.path}
+                    className="text-base font-medium text-gray-900 hover:text-primary-500 transition-colors duration-200 px-3 py-2 rounded-md hover:bg-gray-50"
+                    onClick={onClose}
+                  >
+                    {item.name}
+                  </Link>
+                ))}
+                {session ? (
+                  <button
+                    onClick={() => {
+                      onSignOut();
+                      onClose();
+                    }}
+                    className="w-full text-left px-3 py-2 text-base font-medium text-gray-900 hover:text-primary-500 transition-colors duration-200 rounded-md hover:bg-gray-50"
+                  >
+                    Sign Out
+                  </button>
+                ) : (
+                  <Link
+                    to="/login"
+                    className="text-base font-medium text-gray-900 hover:text-primary-500 transition-colors duration-200 px-3 py-2 rounded-md hover:bg-gray-50"
+                    onClick={onClose}
+                  >
+                    Sign In
+                  </Link>
+                )}
+              </nav>
+            </div>
           </div>
         </div>
       </div>
