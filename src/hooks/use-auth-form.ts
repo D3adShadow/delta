@@ -63,7 +63,16 @@ export const useAuthForm = () => {
             description: `Please wait ${waitTime} seconds before trying again`,
             variant: "destructive",
           });
-        } else {
+        } 
+        // Handle user already exists error
+        else if (authError.message.includes("User already registered")) {
+          toast({
+            title: "Account exists",
+            description: "An account with this email already exists. Please sign in instead.",
+            variant: "destructive",
+          });
+        }
+        else {
           toast({
             title: "Error",
             description: authError.message,
@@ -103,7 +112,7 @@ export const useAuthForm = () => {
           title: "Welcome!",
           description: "Your account has been created successfully.",
         });
-        navigate("/"); // Changed from /courses to /
+        navigate("/");
       }
     } catch (error) {
       console.error("Unexpected signup error:", error);
@@ -144,7 +153,7 @@ export const useAuthForm = () => {
           title: "Welcome back!",
           description: "You have successfully signed in.",
         });
-        navigate("/"); // Changed from /courses to /
+        navigate("/");
       }
     } catch (error) {
       console.error("Unexpected signin error:", error);
