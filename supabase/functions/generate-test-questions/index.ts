@@ -18,9 +18,9 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    const geminiKey = Deno.env.get('GEMINI_API_KEY');
+    const perplexityKey = Deno.env.get('PERPLEXITY_API_KEY');
 
-    if (!supabaseUrl || !supabaseKey || !geminiKey) {
+    if (!supabaseUrl || !supabaseKey || !perplexityKey) {
       console.error('Missing required environment variables');
       throw new Error('Server configuration error');
     }
@@ -44,50 +44,57 @@ Format each question as a JSON object with these fields:
 
 Return an array of exactly 5 such question objects. The response must be a valid JSON array.`;
 
-    console.log('Sending request to Gemini API with key length:', geminiKey.length);
+    console.log('Sending request to Perplexity API');
     
-    const response = await fetch('https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent', {
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${perplexityKey}`,
         'Content-Type': 'application/json',
-        'x-goog-api-key': geminiKey,
       },
       body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: prompt
-          }]
-        }],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 1024,
-        }
-      })
+        model: 'llama-3.1-sonar-small-128k-online',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a helpful assistant that generates multiple choice questions in JSON format. Be precise and concise.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 1000,
+        top_p: 0.9,
+        frequency_penalty: 1,
+        presence_penalty: 0
+      }),
     });
 
     if (!response.ok) {
-      console.error('Gemini API error status:', response.status);
+      console.error('Perplexity API error status:', response.status);
       const errorText = await response.text();
-      console.error('Gemini API error response:', errorText);
-      throw new Error(`Gemini API error: ${response.status}`);
+      console.error('Perplexity API error response:', errorText);
+      throw new Error(`Perplexity API error: ${response.status}`);
     }
 
     const data = await response.json();
-    console.log('Received response from Gemini');
+    console.log('Received response from Perplexity');
 
-    if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
-      console.error('Invalid Gemini response structure:', JSON.stringify(data));
-      throw new Error('Invalid response structure from Gemini');
+    if (!data.choices?.[0]?.message?.content) {
+      console.error('Invalid Perplexity response structure:', JSON.stringify(data));
+      throw new Error('Invalid response structure from Perplexity');
     }
 
-    const responseText = data.candidates[0].content.parts[0].text;
-    console.log('Raw Gemini response:', responseText);
+    const responseText = data.choices[0].message.content;
+    console.log('Raw Perplexity response:', responseText);
 
     // Extract JSON array from response
     const jsonMatch = responseText.match(/\[[\s\S]*\]/);
     if (!jsonMatch) {
       console.error('Could not find JSON array in response');
-      throw new Error('Invalid response format from Gemini');
+      throw new Error('Invalid response format from Perplexity');
     }
 
     let questions;
@@ -96,7 +103,7 @@ Return an array of exactly 5 such question objects. The response must be a valid
       console.log(`Successfully parsed ${questions.length} questions`);
     } catch (error) {
       console.error('JSON parse error:', error);
-      throw new Error('Failed to parse questions from Gemini response');
+      throw new Error('Failed to parse questions from Perplexity response');
     }
 
     // Validate questions
