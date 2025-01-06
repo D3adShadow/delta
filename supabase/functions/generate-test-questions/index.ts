@@ -44,13 +44,13 @@ Format each question as a JSON object with these fields:
 
 Return an array of exactly 5 such question objects. The response must be a valid JSON array.`;
 
-    console.log('Sending request to Gemini API...');
+    console.log('Sending request to Gemini API with key length:', geminiKey.length);
     
     const response = await fetch('https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${geminiKey}`,
+        'x-goog-api-key': geminiKey,
       },
       body: JSON.stringify({
         contents: [{
