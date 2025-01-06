@@ -53,7 +53,7 @@ Return an array of exactly 5 such question objects. The response must be a valid
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama-3.1-sonar-small-128k-online',
+        model: 'llama-3.1-sonar-small-128k-online', // Using the smallest model for cost efficiency
         messages: [
           {
             role: 'system',
