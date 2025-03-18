@@ -90,18 +90,6 @@ export const usePurchaseCourse = ({ id, points, onPurchase }: UsePurchaseCourseP
         return;
       }
 
-      // Fetch course details for question generation
-      const { data: courseData, error: courseError } = await supabase
-        .from("courses")
-        .select("title, description")
-        .eq("id", id)
-        .single();
-
-      if (courseError) {
-        console.error("Error fetching course details:", courseError);
-        throw new Error("Failed to fetch course details");
-      }
-
       console.log("Creating purchase record...");
       // Create purchase record
       const { error: purchaseError } = await supabase
@@ -135,21 +123,6 @@ export const usePurchaseCourse = ({ id, points, onPurchase }: UsePurchaseCourseP
       if (updateError) {
         console.error("Update error:", updateError);
         throw new Error("Failed to update points");
-      }
-
-      // Generate test questions
-      console.log("Generating test questions...");
-      const { error: questionError } = await supabase.functions.invoke('generate-test-questions', {
-        body: {
-          courseId: id,
-          courseTitle: courseData.title,
-          courseDescription: courseData.description
-        }
-      });
-
-      if (questionError) {
-        console.error("Error generating questions:", questionError);
-        // Don't throw error here, just log it as it's not critical
       }
 
       console.log("Purchase completed successfully!");

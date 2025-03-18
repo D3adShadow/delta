@@ -32,7 +32,7 @@ const Hero = () => {
                   />
                 </Link>
                 <Link
-                  to="/learn-more"
+                  to="/about"
                   className="text-sm font-semibold leading-6 text-gray-900 hover:text-primary-500 transition-colors duration-200"
                 >
                   Learn more <span aria-hidden="true">→</span>

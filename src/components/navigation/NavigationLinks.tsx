@@ -17,7 +17,7 @@ const NavigationLinks = ({ items, onItemClick }: NavigationLinksProps) => {
         <Link
           key={item.name}
           to={item.path}
-          className="text-gray-600 hover:text-primary-500 hover:bg-gray-50 px-4 py-2 rounded-md transition-all duration-200 font-medium mx-2"
+          className="text-gray-600 hover:text-primary-500 transition-colors duration-200 font-medium"
           onClick={onItemClick}
         >
           {item.name}

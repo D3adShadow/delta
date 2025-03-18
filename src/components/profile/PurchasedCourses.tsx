@@ -76,6 +76,7 @@ const PurchasedCourses = () => {
                 enrolled={42}
                 points={purchase.points_spent}
                 image={purchase.courses.thumbnail_url}
+                hideImage={true}
                 hidePurchaseButton={true}
               />
             ))}
